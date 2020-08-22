@@ -1,0 +1,4 @@
+/media/wade/WadeGao/WinterVacation/实验楼/C++实现即时通讯软件/build/CMakeFiles/rebuild_cache.dir
+/media/wade/WadeGao/WinterVacation/实验楼/C++实现即时通讯软件/build/CMakeFiles/edit_cache.dir
+/media/wade/WadeGao/WinterVacation/实验楼/C++实现即时通讯软件/build/CMakeFiles/Server.dir
+/media/wade/WadeGao/WinterVacation/实验楼/C++实现即时通讯软件/build/CMakeFiles/Client.dir
