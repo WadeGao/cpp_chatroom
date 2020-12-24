@@ -1,163 +1,172 @@
-#include "Client.hpp"
+#include "Client.h"
 #include <iostream>
-using namespace std;
-// 客户端类成员函数
-// 客户端类构造函数
-Client::Client()
+
+Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), password(pwd), sock(0), pid(0), isClientWork(true), epfd(0)
 {
-    // 初始化要连接的服务器地址和端口
     serverAddr.sin_family = PF_INET;
-    serverAddr.sin_port = htons(SERVER_PORT);
     serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
-    // 初始化socket
-    sock = 0;
-    // 初始化进程号
-    pid = 0;
-    // 客户端状态
-    isClientwork = true;
-    // epool fd
-    epfd = 0;
+    serverAddr.sin_port = htons(SERVER_PORT);
 }
-// 连接服务器
+
+Client::~Client() {}
+
+bool Client::CheckIfAccountExist(const std::string &account)
+{
+    const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + account + "';";
+    return (this->db.ReadMySQL(sql).size() == 1);
+}
+
+bool Client::CheckPassword(const std::string &account, const std::string &pwd)
+{
+    const std::string sql = "SELECT ClientPassword FROM ChatRoom WHERE ClientID = '" + account + "';";
+    auto ret = this->db.ReadMySQL(sql);
+    return (ret.size() == 1 && ret.at(0).at(0) == pwd);
+}
+
+void Client::CheckDatabaseJobBeforeServe()
+{
+    if (!CheckIfAccountExist(this->ClientID))
+    {
+        fprintf(stderr, "Account %s not exists.\n", this->ClientID.c_str());
+        exit(CLIENTID_NOT_EXIST);
+    }
+
+    if (!CheckPassword(this->ClientID, this->password))
+    {
+        fprintf(stderr, "Invalid password!\n");
+        exit(WRONG_CLIENT_PASSWORD);
+    }
+}
+
+std::string Client::GetNickName()
+{
+    auto sql = "SELECT ClientNickname FROM ChatRoom WHERE ClientID = '" + this->ClientID + "';";
+    auto __nickname = this->db.ReadMySQL(sql).at(0).at(0);
+    return __nickname;
+}
+
 void Client::Connect()
 {
-    cout << "Connect Server: " << SERVER_IP << " : " << SERVER_PORT << endl;
-    // 创建socket
-    sock = socket(PF_INET, SOCK_STREAM, 0);
-    if (sock < 0)
+    //检查数据库连接性
+    //fprintf(stdout, "Connect to Database %s@%s:%s\n", DATABASE_ADMIN, DATABASE_IP, DATABASE_NAME);
+    if (!this->db.ConnectMySQL(DATABASE_IP, DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
     {
-        perror("sock error");
-        exit(-1);
+        fprintf(stderr, "Failed to Connect Database.\n");
+        exit(FAIL_CONNECT_DB);
     }
-    // 连接服务端
+    this->CheckDatabaseJobBeforeServe();
+
+    //建立转发服务器连接
+    //fprintf(stdout, "Connect to Server %s:%u\n", SERVER_IP, SERVER_PORT);
+
+    if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        fprintf(stderr, "socket() error\n");
+        exit(EXIT_FAILURE);
+    }
+
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
-        perror("connect error");
-        exit(-1);
+        fprintf(stderr, "Can't connect to server error\n");
+        exit(EXIT_FAILURE);
     }
-    // 创建管道，其中fd[0]用于父进程读，fd[1]用于子进程写
+
     if (pipe(pipe_fd) < 0)
     {
-        perror("pipe error");
-        exit(-1);
+        fprintf(stderr, "pipe() error");
+        exit(EXIT_FAILURE);
     }
-    // 创建epoll
-    epfd = epoll_create(EPOLL_SIZE);
-    if (epfd < 0)
+
+    if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
     {
-        perror("epfd error");
-        exit(-1);
+        fprintf(stderr, "epoll_create() error\n");
+        exit(EXIT_FAILURE);
     }
-    //将sock和管道读端描述符都添加到内核事件表中
+
     addfd(epfd, sock, true);
     addfd(epfd, pipe_fd[0], true);
+
+    //获取用户昵称
+    this->NickName = this->GetNickName();
+    //fprintf(stdout, "Your nickname is %s.\n", this->NickName.c_str());
+
+    //告知用户身份
+    sprintf(msg, "%s", this->ClientID.c_str());
+    send(sock, msg, BUF_SIZE, 0);
 }
-// 断开连接，清理并关闭文件描述符
-void Client::Close()
-{
-    if (pid)
-    {
-        //关闭父进程的管道和sock
-        close(pipe_fd[0]);
-        close(sock);
-    }
-    else
-    {
-        //关闭子进程的管道
-        close(pipe_fd[1]);
-    }
-}
-// 启动客户端
+
 void Client::Start()
 {
-    // epoll 事件队列
     static struct epoll_event events[2];
-    // 连接服务器
+
     Connect();
-    // 创建子进程
+
     pid = fork();
-    // 如果创建子进程失败则退出
     if (pid < 0)
     {
-        perror("fork error");
+        fprintf(stderr, "fork() error\n");
         close(sock);
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
-    else if (pid == 0)
+    else if (!pid)
     {
-        // 进入子进程执行流程
-        //子进程负责写入管道，因此先关闭读端
         close(pipe_fd[0]);
-        // 输入exit可以退出聊天室
-        cout << "Please input 'LOGOUT' to exit the chat room" << endl;
-        // 如果客户端运行正常则不断读取输入发送给服务端
-        while (isClientwork)
+        fprintf(stdout, "\033[31mPlease input 'LOGOUT' to exit the chat room\n\033[0m");
+        while (isClientWork)
         {
-            bzero(&message, BUF_SIZE);
-            fgets(message, BUF_SIZE, stdin);
-            // 客户输出exit,退出
-            if (strncasecmp(message, EXIT, strlen(EXIT)) == 0)
-            {
-                isClientwork = 0;
-            }
-            // 子进程将信息写入管道
+            bzero(msg, BUF_SIZE);
+            fgets(msg, BUF_SIZE, stdin);
+            if (strncasecmp(msg, LOGOUT, strlen(LOGOUT)) == 0)
+                isClientWork = false;
             else
             {
-                if (write(pipe_fd[1], message, strlen(message) - 1) < 0)
+                if (write(pipe_fd[1], msg, strlen(msg) - 1) < 0)
                 {
-                    perror("fork error");
-                    exit(-1);
+                    fprintf(stderr, "child process write error\n");
+                    exit(EXIT_FAILURE);
                 }
             }
         }
     }
     else
     {
-        //pid > 0 父进程
-        //父进程负责读管道数据，因此先关闭写端
         close(pipe_fd[1]);
-        // 主循环(epoll_wait)
-        while (isClientwork)
+        while (isClientWork)
         {
-            int epoll_events_count = epoll_wait(epfd, events, 2, -1);
-            //处理就绪事件
-            for (int i = 0; i < epoll_events_count; ++i)
+            auto epoll_event_count = epoll_wait(epfd, events, 2, -1);
+            for (int i = 0; i < epoll_event_count; i++)
             {
-                bzero(&message, BUF_SIZE);
-                //服务端发来消息
-                if (events[i].data.fd == sock)
+                bzero(msg, BUF_SIZE);
+                if (events[i].data.fd == sock) //服务端发来消息
                 {
-                    //接受服务端消息
-                    int ret = recv(sock, message, BUF_SIZE, 0);
-                    // ret= 0 服务端关闭
-                    if (ret == 0)
+                    int ret = recv(sock, msg, BUF_SIZE, 0);
+                    if (!ret)
                     {
-                        cout << "Server closed connection: " << sock << endl;
+                        fprintf(stderr, "Server closed.\n");
                         close(sock);
-                        isClientwork = 0;
+                        isClientWork = false;
                     }
                     else
-                    {
-                        cout << message << endl;
-                    }
+                        fprintf(stdout, "%s\n", msg);
                 }
-                //子进程写入事件发生，父进程处理并发送服务端
-                else
+                else //子进程写入事件发生，父进程处理并发送服务端
                 {
-                    //父进程从管道中读取数据
-                    int ret = read(events[i].data.fd, message, BUF_SIZE);
-                    // ret = 0
-                    if (ret == 0)
-                        isClientwork = 0;
-                    else
-                    {
-                        // 将信息发送给服务端
-                        send(sock, message, BUF_SIZE, 0);
-                    }
+                    int ret = read(events[i].data.fd, msg, BUF_SIZE);
+                    !ret ? isClientWork = false : send(sock, msg, BUF_SIZE, 0);
                 }
-            } //for
-        }     //while
+            }
+        }
     }
-    // 退出进程
     Close();
+}
+
+void Client::Close()
+{
+    if (pid)
+    {
+        close(pipe_fd[0]);
+        close(sock);
+    }
+    else
+        close(pipe_fd[1]);
 }

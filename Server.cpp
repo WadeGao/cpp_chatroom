@@ -1,177 +1,188 @@
-#include "Server.hpp"
+#include "Server.h"
 #include <iostream>
-using namespace std;
-// 服务端类成员函数
-// 服务端类构造函数
-Server::Server()
+
+Server::Server() : listener(0), epfd(0)
 {
-    // 初始化服务器地址和端口
     serverAddr.sin_family = PF_INET;
     serverAddr.sin_port = htons(SERVER_PORT);
     serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
-    // 初始化socket
-    listener = 0;
-    // epool fd
-    epfd = 0;
 }
-// 初始化服务端并启动监听
+
+Server::~Server() {}
+
 void Server::Init()
 {
-    cout << "Init Server..." << endl;
-    //创建监听socket
-    listener = socket(PF_INET, SOCK_STREAM, 0);
-    if (listener < 0)
+    fprintf(stdout, "Init Server...\n");
+
+    if ((listener = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
-        perror("listener");
-        exit(-1);
+        fprintf(stderr, "listener error\n");
+        exit(EXIT_FAILURE);
     }
-    //绑定地址
+
     if (bind(listener, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
-        perror("bind error");
-        exit(-1);
+        fprintf(stderr, "bind error\n");
+        exit(EXIT_FAILURE);
     }
-    //监听
-    int ret = listen(listener, 5);
-    if (ret < 0)
-    {
-        perror("listen error");
-        exit(-1);
-    }
-    cout << "Start to listen: " << SERVER_IP << endl;
-    //在内核中创建事件表
-    epfd = epoll_create(EPOLL_SIZE);
-    if (epfd < 0)
-    {
-        perror("epfd error");
-        exit(-1);
-    }
-    //往事件表里添加监听事件
-    addfd(epfd, listener, true);
-}
-// 关闭服务，清理并关闭文件描述符
-void Server::Close()
-{
-    //关闭socket
-    close(listener);
-    //关闭epoll监听
-    close(epfd);
-}
-// 发送广播消息给所有客户端
-int Server::SendBroadcastMessage(int clientfd)
-{
-    // buf[BUF_SIZE] 接收新消息
-    // message[BUF_SIZE] 保存格式化的消息
-    char buf[BUF_SIZE], message[BUF_SIZE];
-    bzero(buf, BUF_SIZE);
-    bzero(message, BUF_SIZE);
-    // 接收新消息
-    cout << "read from client(clientID = " << clientfd << ")" << endl;
-    int len = recv(clientfd, buf, BUF_SIZE, 0);
 
-    // 如果客户端关闭了连接
-    if (len == 0)
+    if (listen(listener, 5) < 0)
     {
-        close(clientfd);
-        // 在客户端列表中删除该客户端
-        clients_list.remove(clientfd);
-        cout << "ClientID = " << clientfd
-             << " closed.\n now there are "
-             << clients_list.size()
-             << " client in the char room"
-             << endl;
+        fprintf(stderr, "listen error");
+        exit(EXIT_FAILURE);
     }
-    // 发送广播消息给所有客户端
-    else
+
+    fprintf(stdout, "Start to listen: %s:%u\n", SERVER_IP, SERVER_PORT);
+
+    if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
     {
-        // 判断是否聊天室还有其他客户端
-        if (clients_list.size() == 1)
-        {
-            // 发送提示消息
-            send(clientfd, CAUTION, strlen(CAUTION), 0);
-            return len;
-        }
-        // 格式化发送的消息内容
-        sprintf(message, SERVER_MESSAGE, clientfd, buf);
-        // 遍历客户端列表依次发送消息，需要判断不要给来源客户端发
-        list<int>::iterator it;
-        for (it = clients_list.begin(); it != clients_list.end(); ++it)
-        {
-            if (*it != clientfd)
-            {
-                if (send(*it, message, BUF_SIZE, 0) < 0)
-                {
-                    return -1;
-                }
-            }
-        }
+        fprintf(stderr, "epoll_create() error\n");
+        exit(EXIT_FAILURE);
     }
-    return len;
+
+    addfd(epfd, listener, true);
+
+    //连接到数据库
+    if (!this->db.ConnectMySQL(DATABASE_IP, DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
+    {
+        fprintf(stderr, "Failed to Connect Database.\n");
+        exit(FAIL_CONNECT_DB);
+    }
 }
-// 启动服务端
+
 void Server::Start()
 {
-    // epoll 事件队列
     static struct epoll_event events[EPOLL_SIZE];
-    // 初始化服务端
     Init();
-    //主循环
-    while (1)
+    while (true)
     {
-        //epoll_events_count表示就绪事件的数目
-        int epoll_events_count = epoll_wait(epfd, events, EPOLL_SIZE, -1);
+        auto epoll_events_count = epoll_wait(epfd, events, EPOLL_SIZE, -1);
         if (epoll_events_count < 0)
         {
-            perror("epoll failure");
+            fprintf(stderr, "epoll fail\n");
             break;
         }
-        cout << "epoll_events_count =\n"
-             << epoll_events_count << endl;
-        //处理这epoll_events_count个就绪事件
-        for (int i = 0; i < epoll_events_count; ++i)
+        fprintf(stdout, "epoll_events_count = %d\n", epoll_events_count);
+
+        for (int i = 0; i < epoll_events_count; i++)
         {
-            int sockfd = events[i].data.fd;
-            //新用户连接
+            auto sockfd = events[i].data.fd;
             if (sockfd == listener)
             {
                 struct sockaddr_in client_address;
                 socklen_t client_addrLength = sizeof(struct sockaddr_in);
-                int clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
-                cout << "client connection from: "
-                     << inet_ntoa(client_address.sin_addr) << ":"
-                     << ntohs(client_address.sin_port) << ", clientfd = "
-                     << clientfd << endl;
-                addfd(epfd, clientfd, true);
-                // 服务端用list保存用户连接
-                clients_list.push_back(clientfd);
-                cout << "Add new clientfd = " << clientfd << " to epoll" << endl;
-                cout << "Now there are " << clients_list.size() << " clients int the chat room" << endl;
-                // 服务端发送欢迎信息
-                cout << "welcome message" << endl;
-                char message[BUF_SIZE];
-                bzero(message, BUF_SIZE);
-                sprintf(message, SERVER_WELCOME, clientfd);
-                int ret = send(clientfd, message, BUF_SIZE, 0);
-                if (ret < 0)
+                auto clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
+
+                //接收首次通信时由客户端告知的连接用户身份信息
+                char ID_buf[BUF_SIZE] = {0};
+                int len = recv(clientfd, ID_buf, BUF_SIZE, 0);
+                if (!len)
+                    continue;
+
+                //检查是否同一账号登录多次
+                if (this->IsDuplicatedLoggin(ID_buf))
                 {
-                    perror("send error");
+                    close(clientfd);
+                    fprintf(stderr, "\033[31mDenied a duplicated user's connection\n\033[0m");
+                    continue;
+                }
+
+                this->AddMappingInfo(clientfd, ID_buf);
+
+                addfd(epfd, clientfd, true);
+                fprintf(stdout, "\033[31mClient connection from %s:%u, clientfd = %d\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), clientfd);
+                fprintf(stdout, "Add new clientfd = %d to epoll. Now there are %lu client(s) int the chat room\n", clientfd, client_list.size());
+                fprintf(stdout, "Welcome Message\n");
+
+                char msg[BUF_SIZE] = {0};
+                sprintf(msg, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
+                if (send(clientfd, msg, BUF_SIZE, 0) < 0)
+                {
+                    fprintf(stderr, "send() welcome msg error\n");
                     Close();
-                    exit(-1);
+                    exit(EXIT_FAILURE);
                 }
             }
-            //处理用户发来的消息，并广播，使其他用户收到信息
             else
             {
-                int ret = SendBroadcastMessage(sockfd);
-                if (ret < 0)
+                if (SendBroadcastMsg(sockfd) < 0)
                 {
-                    perror("error");
+                    fprintf(stderr, "SendBroadcastMsg() error\n");
                     Close();
-                    exit(-1);
+                    exit(EXIT_FAILURE);
                 }
             }
         }
     }
-    // 关闭服务
     Close();
+}
+
+int Server::SendBroadcastMsg(const int clientfd)
+{
+    char buf[BUF_SIZE] = {0}, msg[BUF_SIZE] = {0};
+    fprintf(stdout, "read from client %d\n", clientfd);
+
+    int len = recv(clientfd, buf, BUF_SIZE, 0);
+
+    if (!len)
+    {
+        close(clientfd);
+
+        this->RemoveMappingInfo(clientfd);
+
+        fprintf(stdout, "\033[31mClient %d closed.\n\033[0m", clientfd);
+        fprintf(stdout, "Now there are %lu client(s) in the chat room.\n", client_list.size());
+    }
+    else
+    {
+        if (client_list.size() == 1)
+        {
+            send(clientfd, CAUTION, strlen(CAUTION), 0);
+            return len;
+        }
+        sprintf(msg, SERVER_MSG, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str(), buf);
+        for (const auto &iter : client_list)
+        {
+            if (iter != clientfd)
+                if (send(iter, msg, BUF_SIZE, 0) < 0)
+                    return -1;
+        }
+    }
+    return len;
+}
+
+void Server::Close()
+{
+    close(listener);
+    close(epfd);
+}
+
+bool Server::IsDuplicatedLoggin(const std::string &ID)
+{
+    auto iter = this->If_Duplicated_Loggin.find(ID);
+    return (iter == this->If_Duplicated_Loggin.end()) ? false : iter->second;
+}
+
+void Server::AddMappingInfo(const int clientfd, const std::string &ID_buf)
+{
+    //根据账号ID查数据库得到账号昵称
+    const std::string sql = "SELECT ClientNickname FROM ChatRoom WHERE ClientID = '" + std::string(ID_buf) + "';";
+    const std::string Nickname_buf = this->db.ReadMySQL(sql).at(0).at(0);
+    //写入文件描述符与账号信息的映射表
+    this->Fd2_ID_Nickname.insert(std::make_pair(clientfd, std::make_pair(ID_buf, Nickname_buf)));
+    //写入在线账号ID表
+    this->If_Duplicated_Loggin.insert(std::make_pair(ID_buf, true));
+    //服务端用list保存用户连接
+    this->client_list.push_back(clientfd);
+}
+
+void Server::RemoveMappingInfo(const int clientfd)
+{
+    auto closedAccount = this->Fd2_ID_Nickname.find(clientfd)->second.first;
+    //删除文件描述符->账号信息映射表
+    this->Fd2_ID_Nickname.erase(this->Fd2_ID_Nickname.find(clientfd));
+    //删除在线账号列表表项
+    this->If_Duplicated_Loggin.erase(this->If_Duplicated_Loggin.find(closedAccount));
+    //将该账号对应的文件描述符从在线文件描述符集中删除
+    this->client_list.remove(clientfd);
 }
