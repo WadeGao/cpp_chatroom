@@ -74,20 +74,32 @@ void Server::Start()
                 auto clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
 
                 //接收首次通信时由客户端告知的连接用户身份信息
-                char ID_buf[BUF_SIZE] = {0};
-                int len = recv(clientfd, ID_buf, BUF_SIZE, 0);
+                char ID_Pwd_buf[BUF_SIZE] = {0};
+                auto len = recv(clientfd, ID_Pwd_buf, BUF_SIZE, 0);
                 if (!len)
                     continue;
 
+                auto vectorID_Pwd = this->ShakeHandMsgParser(ID_Pwd_buf);
+
+                if (!this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1)))
+                {
+                    close(clientfd);
+                    fprintf(stderr, "\033[31mAccount Verification Failed! Account not exists or wrong password!\n\033[0m");
+                    continue;
+                    //至此账号已经通过核查，账号真实存在，提供的口令也正确
+                }
+
                 //检查是否同一账号登录多次
-                if (this->IsDuplicatedLoggin(ID_buf))
+                if (this->IsDuplicatedLoggin(vectorID_Pwd.at(0)))
                 {
                     close(clientfd);
                     fprintf(stderr, "\033[31mDenied a duplicated user's connection\n\033[0m");
                     continue;
+                    //至此账号单例检查已通过
                 }
 
-                this->AddMappingInfo(clientfd, ID_buf);
+                // 查数据库完善信息，并添加信息到系统文件描述表和映射表
+                this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
 
                 addfd(epfd, clientfd, true);
                 fprintf(stdout, "\033[31mClient connection from %s:%u, clientfd = %d\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), clientfd);
@@ -166,10 +178,9 @@ bool Server::IsDuplicatedLoggin(const std::string &ID)
 void Server::AddMappingInfo(const int clientfd, const std::string &ID_buf)
 {
     //根据账号ID查数据库得到账号昵称
-    const std::string sql = "SELECT ClientNickname FROM ChatRoom WHERE ClientID = '" + std::string(ID_buf) + "';";
-    const std::string Nickname_buf = this->db.ReadMySQL(sql).at(0).at(0);
+    auto nickname = this->GetNickName(ID_buf);
     //写入文件描述符与账号信息的映射表
-    this->Fd2_ID_Nickname.insert(std::make_pair(clientfd, std::make_pair(ID_buf, Nickname_buf)));
+    this->Fd2_ID_Nickname.insert(std::make_pair(clientfd, std::make_pair(ID_buf, nickname)));
     //写入在线账号ID表
     this->If_Duplicated_Loggin.insert(std::make_pair(ID_buf, true));
     //服务端用list保存用户连接
@@ -185,4 +196,46 @@ void Server::RemoveMappingInfo(const int clientfd)
     this->If_Duplicated_Loggin.erase(this->If_Duplicated_Loggin.find(closedAccount));
     //将该账号对应的文件描述符从在线文件描述符集中删除
     this->client_list.remove(clientfd);
+}
+
+bool Server::AccountVerification(const std::string &Account, const std::string &Pwd)
+{
+    auto CheckIfAccountExist = [&Account, this]() -> bool {
+        const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + Account + "';";
+        return (this->db.ReadMySQL(sql).size() == 1);
+    };
+    auto CheckPassword = [&Account, &Pwd, this]() -> bool {
+        const std::string sql = "SELECT ClientPassword FROM ChatRoom WHERE ClientID = '" + Account + "';";
+        auto ret = this->db.ReadMySQL(sql);
+        return (ret.size() == 1 && ret.at(0).at(0) == Pwd);
+    };
+
+    if (!CheckIfAccountExist())
+    {
+        fprintf(stderr, "Account %s not exists.\n", Account.c_str());
+        return false;
+    }
+
+    if (!CheckPassword())
+    {
+        fprintf(stderr, "Invalid password!\n");
+        return false;
+    }
+    return true;
+}
+
+std::string Server::GetNickName(const std::string &ClientID)
+{
+    auto sql = "SELECT ClientNickname FROM ChatRoom WHERE ClientID = '" + ClientID + "';";
+    auto nickname = this->db.ReadMySQL(sql).at(0).at(0);
+    return nickname;
+}
+
+std::vector<std::string> Server::ShakeHandMsgParser(const std::string &msg_buf)
+{
+    size_t pos = msg_buf.find(']', 1);
+    size_t idLen = atol(msg_buf.substr(1, pos - 1).c_str());
+    std::string ID = msg_buf.substr(pos + 1, idLen);
+    std::string Pwd = msg_buf.substr(pos + 1 + idLen, msg_buf.size());
+    return {ID, Pwd};
 }

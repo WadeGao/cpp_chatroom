@@ -1,7 +1,7 @@
 #include "Client.h"
 #include <iostream>
 
-Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), password(pwd), sock(0), pid(0), isClientWork(true), epfd(0)
+Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), ClientPwd(pwd), sock(0), pid(0), isClientWork(true), epfd(0)
 {
     serverAddr.sin_family = PF_INET;
     serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
@@ -10,55 +10,11 @@ Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), pa
 
 Client::~Client() {}
 
-bool Client::CheckIfAccountExist(const std::string &account)
-{
-    const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + account + "';";
-    return (this->db.ReadMySQL(sql).size() == 1);
-}
-
-bool Client::CheckPassword(const std::string &account, const std::string &pwd)
-{
-    const std::string sql = "SELECT ClientPassword FROM ChatRoom WHERE ClientID = '" + account + "';";
-    auto ret = this->db.ReadMySQL(sql);
-    return (ret.size() == 1 && ret.at(0).at(0) == pwd);
-}
-
-void Client::CheckDatabaseJobBeforeServe()
-{
-    if (!CheckIfAccountExist(this->ClientID))
-    {
-        fprintf(stderr, "Account %s not exists.\n", this->ClientID.c_str());
-        exit(CLIENTID_NOT_EXIST);
-    }
-
-    if (!CheckPassword(this->ClientID, this->password))
-    {
-        fprintf(stderr, "Invalid password!\n");
-        exit(WRONG_CLIENT_PASSWORD);
-    }
-}
-
-std::string Client::GetNickName()
-{
-    auto sql = "SELECT ClientNickname FROM ChatRoom WHERE ClientID = '" + this->ClientID + "';";
-    auto __nickname = this->db.ReadMySQL(sql).at(0).at(0);
-    return __nickname;
-}
-
 void Client::Connect()
 {
-    //检查数据库连接性
-    //fprintf(stdout, "Connect to Database %s@%s:%s\n", DATABASE_ADMIN, DATABASE_IP, DATABASE_NAME);
-    if (!this->db.ConnectMySQL(DATABASE_IP, DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
-    {
-        fprintf(stderr, "Failed to Connect Database.\n");
-        exit(FAIL_CONNECT_DB);
-    }
-    this->CheckDatabaseJobBeforeServe();
 
     //建立转发服务器连接
     //fprintf(stdout, "Connect to Server %s:%u\n", SERVER_IP, SERVER_PORT);
-
     if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
         fprintf(stderr, "socket() error\n");
@@ -86,12 +42,8 @@ void Client::Connect()
     addfd(epfd, sock, true);
     addfd(epfd, pipe_fd[0], true);
 
-    //获取用户昵称
-    this->NickName = this->GetNickName();
-    //fprintf(stdout, "Your nickname is %s.\n", this->NickName.c_str());
-
     //告知用户身份
-    sprintf(msg, "%s", this->ClientID.c_str());
+    sprintf(msg, "[%lu]%s%s", this->ClientID.size(), this->ClientID.c_str(), this->ClientPwd.c_str());
     send(sock, msg, BUF_SIZE, 0);
 }
 

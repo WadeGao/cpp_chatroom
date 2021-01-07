@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-20 21:42:24
- * @LastEditTime: 2020-12-23 21:59:02
+ * @LastEditTime: 2020-12-25 10:47:48
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /IM_Software/Client.h
@@ -23,16 +23,9 @@ private:
     struct sockaddr_in serverAddr;
 
     std::string ClientID;
-    std::string password;
-    std::string NickName;
+    std::string ClientPwd;
 
-    Database db;
-
-    bool CheckIfAccountExist(const std::string &account);
-    bool CheckPassword(const std::string &account, const std::string &pwd);
-    void CheckDatabaseJobBeforeServe();
     void Connect();
-    std::string GetNickName();
 
 public:
     Client(const std::string &id, const std::string &pwd);
