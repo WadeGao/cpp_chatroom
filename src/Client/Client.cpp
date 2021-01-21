@@ -1,14 +1,15 @@
 #include "Client.h"
 #include <iostream>
+#include <utility>
 
-Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), ClientPwd(pwd), sock(0), pid(0), isClientWork(true), epfd(0)
+Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), ClientPwd(std::move(pwd)), sock(0), pid(0), isClientWork(true), epfd(0)
 {
     serverAddr.sin_family = PF_INET;
     serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
     serverAddr.sin_port = htons(SERVER_PORT);
 }
 
-Client::~Client() {}
+Client::~Client() = default;
 
 void Client::Connect()
 {

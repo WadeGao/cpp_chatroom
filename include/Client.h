@@ -17,10 +17,10 @@ private:
     int sock;
     int pid;
     int epfd;
-    int pipe_fd[2];
+    int pipe_fd[2]{};
     bool isClientWork;
-    char msg[BUF_SIZE];
-    struct sockaddr_in serverAddr;
+    char msg[BUF_SIZE]{};
+    struct sockaddr_in serverAddr{};
 
     std::string ClientID;
     std::string ClientPwd;
@@ -28,7 +28,7 @@ private:
     void Connect();
 
 public:
-    Client(const std::string &id, const std::string &pwd);
+    Client(std::string id, std::string pwd);
     ~Client();
     void Start();
 

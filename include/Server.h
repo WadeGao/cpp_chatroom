@@ -17,8 +17,8 @@
 class Server
 {
 private:
-    int SendBroadcastMsg(const int clientfd);
-    struct sockaddr_in serverAddr;
+    int SendBroadcastMsg(int clientfd);
+    struct sockaddr_in serverAddr{};
     int listener;
     int epfd;
     std::list<int> client_list;
@@ -34,9 +34,9 @@ private:
     //如果返回值为true，代表此账号已经登录，应该拒绝提供服务
     bool IsDuplicatedLoggin(const std::string &ID);
     //删除两个映射表的对应表项以及客户端文件描述符队列
-    void AddMappingInfo(const int clientfd, const std::string &ID_buf);
+    void AddMappingInfo(int clientfd, const std::string &ID_buf);
     //删除两个映射表的对应表项以及客户端文件描述符队列
-    void RemoveMappingInfo(const int clientfd);
+    void RemoveMappingInfo(int clientfd);
 
     std::vector<std::string> ShakeHandMsgParser(const std::string &msg_buf);
 
@@ -45,7 +45,7 @@ public:
     ~Server();
     void Init();
     void Start();
-    void Close();
+    void Close() const;
 };
 
 #endif

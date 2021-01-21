@@ -8,7 +8,7 @@ Server::Server() : listener(0), epfd(0)
     serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
 }
 
-Server::~Server() {}
+Server::~Server() = default;
 
 void Server::Init()
 {
@@ -69,7 +69,7 @@ void Server::Start()
             auto sockfd = events[i].data.fd;
             if (sockfd == listener)
             {
-                struct sockaddr_in client_address;
+                struct sockaddr_in client_address{};
                 socklen_t client_addrLength = sizeof(struct sockaddr_in);
                 auto clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
 
@@ -163,7 +163,7 @@ int Server::SendBroadcastMsg(const int clientfd)
     return len;
 }
 
-void Server::Close()
+void Server::Close() const
 {
     close(listener);
     close(epfd);
@@ -172,7 +172,7 @@ void Server::Close()
 bool Server::IsDuplicatedLoggin(const std::string &ID)
 {
     auto iter = this->If_Duplicated_Loggin.find(ID);
-    return (iter == this->If_Duplicated_Loggin.end()) ? false : iter->second;
+    return !(iter == this->If_Duplicated_Loggin.end()) && iter->second;
 }
 
 void Server::AddMappingInfo(const int clientfd, const std::string &ID_buf)

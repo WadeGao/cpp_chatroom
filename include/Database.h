@@ -17,7 +17,7 @@
 class Database
 {
 private:
-    MYSQL mysql;
+    MYSQL mysql{};
 
 public:
     Database();

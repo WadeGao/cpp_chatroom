@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define SERVER_IP "10.21.19.176"
+#define SERVER_IP "192.168.8.25"
 #define SERVER_PORT 8888
 #define EPOLL_SIZE 5000
 #define BUF_SIZE 2048
@@ -32,7 +32,7 @@
 #define LOGOUT "LOGOUT"
 #define CAUTION "\033[31mYou're the only one in the chat room!\033[0m"
 
-#define DATABASE_IP "10.21.19.176"
+#define DATABASE_IP "192.168.8.25"
 #define DATABASE_NAME "ChatRoom"
 #define DATABASE_ADMIN "root"
 #define DATABASE_PWD "140603"
@@ -43,7 +43,7 @@
 
 static void addfd(int epollfd, int fd, bool enable_et)
 {
-    struct epoll_event ev;
+    struct epoll_event ev{};
     ev.data.fd = fd;
     ev.events = EPOLLIN;
     if (enable_et)

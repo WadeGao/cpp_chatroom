@@ -23,7 +23,7 @@ bool Database::ConnectMySQL(const char *host, const char *user, const char *db, 
 {
     if (IF_PROVIDE_PWD)
     {
-        if (!mysql_real_connect(&mysql, host, user, provided_pwd, db, 3306, NULL, CLIENT_FOUND_ROWS))
+        if (!mysql_real_connect(&mysql, host, user, provided_pwd, db, 3306, nullptr, CLIENT_FOUND_ROWS))
         {
             //fprintf(stderr, "Connect Failed: %s\n\n", mysql_error(&mysql));
             return false;
@@ -38,7 +38,7 @@ bool Database::ConnectMySQL(const char *host, const char *user, const char *db, 
     {
         fprintf(stdout, "Please input password: ");
         std::cin >> pwd;
-        if (!mysql_real_connect(&mysql, host, user, pwd.c_str(), db, 3306, NULL, CLIENT_FOUND_ROWS))
+        if (!mysql_real_connect(&mysql, host, user, pwd.c_str(), db, 3306, nullptr, CLIENT_FOUND_ROWS))
         {
             fprintf(stderr, "Connect Failed: %s\n\n", mysql_error(&mysql));
             if (++failedTimes >= 3)
@@ -73,7 +73,7 @@ std::vector<std::string> Database::GetTables()
     MYSQL_ROW row;
     while ((row = mysql_fetch_row(result)))
     {
-        allTables.push_back(row[0]);
+        allTables.emplace_back(row[0]);
     }
     return allTables;
 }
