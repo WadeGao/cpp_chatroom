@@ -44,10 +44,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件
+CMAKE_SOURCE_DIR = /home/jossieee/cpp-imsoftware
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build
+CMAKE_BINARY_DIR = /home/jossieee/cpp-imsoftware/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -113,14 +113,14 @@ src/Server/clean: src/Server/CMakeFiles/Server.dir/clean
 src/Client/CMakeFiles/Client.dir/all:
 	$(MAKE) -f src/Client/CMakeFiles/Client.dir/build.make src/Client/CMakeFiles/Client.dir/depend
 	$(MAKE) -f src/Client/CMakeFiles/Client.dir/build.make src/Client/CMakeFiles/Client.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=1,2,3 "Built target Client"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=1,2,3 "Built target Client"
 .PHONY : src/Client/CMakeFiles/Client.dir/all
 
 # Build rule for subdir invocation for target.
 src/Client/CMakeFiles/Client.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jossieee/cpp-imsoftware/build/CMakeFiles 3
 	$(MAKE) -f CMakeFiles/Makefile2 src/Client/CMakeFiles/Client.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jossieee/cpp-imsoftware/build/CMakeFiles 0
 .PHONY : src/Client/CMakeFiles/Client.dir/rule
 
 # Convenience name for target.
@@ -140,14 +140,14 @@ src/Client/CMakeFiles/Client.dir/clean:
 src/Server/CMakeFiles/Server.dir/all:
 	$(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/depend
 	$(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=4,5,6,7 "Built target Server"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=4,5,6,7 "Built target Server"
 .PHONY : src/Server/CMakeFiles/Server.dir/all
 
 # Build rule for subdir invocation for target.
 src/Server/CMakeFiles/Server.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jossieee/cpp-imsoftware/build/CMakeFiles 4
 	$(MAKE) -f CMakeFiles/Makefile2 src/Server/CMakeFiles/Server.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jossieee/cpp-imsoftware/build/CMakeFiles 0
 .PHONY : src/Server/CMakeFiles/Server.dir/rule
 
 # Convenience name for target.

@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件
+CMAKE_SOURCE_DIR = /home/jossieee/cpp-imsoftware
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build
+CMAKE_BINARY_DIR = /home/jossieee/cpp-imsoftware/build
 
 # Include any dependencies generated for this target.
 include src/Server/CMakeFiles/Server.dir/depend.make
@@ -59,42 +59,42 @@ include src/Server/CMakeFiles/Server.dir/flags.make
 
 src/Server/CMakeFiles/Server.dir/Server.cpp.o: src/Server/CMakeFiles/Server.dir/flags.make
 src/Server/CMakeFiles/Server.dir/Server.cpp.o: ../src/Server/Server.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/Server/CMakeFiles/Server.dir/Server.cpp.o"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Server.dir/Server.cpp.o -c /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Server/Server.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/Server/CMakeFiles/Server.dir/Server.cpp.o"
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Server.dir/Server.cpp.o -c /home/jossieee/cpp-imsoftware/src/Server/Server.cpp
 
 src/Server/CMakeFiles/Server.dir/Server.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Server.dir/Server.cpp.i"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Server/Server.cpp > CMakeFiles/Server.dir/Server.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jossieee/cpp-imsoftware/src/Server/Server.cpp > CMakeFiles/Server.dir/Server.cpp.i
 
 src/Server/CMakeFiles/Server.dir/Server.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Server.dir/Server.cpp.s"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Server/Server.cpp -o CMakeFiles/Server.dir/Server.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jossieee/cpp-imsoftware/src/Server/Server.cpp -o CMakeFiles/Server.dir/Server.cpp.s
 
 src/Server/CMakeFiles/Server.dir/ServerMain.cpp.o: src/Server/CMakeFiles/Server.dir/flags.make
 src/Server/CMakeFiles/Server.dir/ServerMain.cpp.o: ../src/Server/ServerMain.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/Server/CMakeFiles/Server.dir/ServerMain.cpp.o"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Server.dir/ServerMain.cpp.o -c /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Server/ServerMain.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/Server/CMakeFiles/Server.dir/ServerMain.cpp.o"
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Server.dir/ServerMain.cpp.o -c /home/jossieee/cpp-imsoftware/src/Server/ServerMain.cpp
 
 src/Server/CMakeFiles/Server.dir/ServerMain.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Server.dir/ServerMain.cpp.i"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Server/ServerMain.cpp > CMakeFiles/Server.dir/ServerMain.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jossieee/cpp-imsoftware/src/Server/ServerMain.cpp > CMakeFiles/Server.dir/ServerMain.cpp.i
 
 src/Server/CMakeFiles/Server.dir/ServerMain.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Server.dir/ServerMain.cpp.s"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Server/ServerMain.cpp -o CMakeFiles/Server.dir/ServerMain.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jossieee/cpp-imsoftware/src/Server/ServerMain.cpp -o CMakeFiles/Server.dir/ServerMain.cpp.s
 
 src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.o: src/Server/CMakeFiles/Server.dir/flags.make
 src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.o: ../src/Common/Database.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.o"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Server.dir/__/Common/Database.cpp.o -c /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Common/Database.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.o"
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Server.dir/__/Common/Database.cpp.o -c /home/jossieee/cpp-imsoftware/src/Common/Database.cpp
 
 src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Server.dir/__/Common/Database.cpp.i"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Common/Database.cpp > CMakeFiles/Server.dir/__/Common/Database.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jossieee/cpp-imsoftware/src/Common/Database.cpp > CMakeFiles/Server.dir/__/Common/Database.cpp.i
 
 src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Server.dir/__/Common/Database.cpp.s"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Common/Database.cpp -o CMakeFiles/Server.dir/__/Common/Database.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jossieee/cpp-imsoftware/src/Common/Database.cpp -o CMakeFiles/Server.dir/__/Common/Database.cpp.s
 
 # Object files for target Server
 Server_OBJECTS = \
@@ -110,8 +110,8 @@ Server_EXTERNAL_OBJECTS =
 ../bin/Server: src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.o
 ../bin/Server: src/Server/CMakeFiles/Server.dir/build.make
 ../bin/Server: src/Server/CMakeFiles/Server.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable ../../../bin/Server"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Server.dir/link.txt --verbose=$(VERBOSE)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable ../../../bin/Server"
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Server.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/Server/CMakeFiles/Server.dir/build: ../bin/Server
@@ -119,10 +119,10 @@ src/Server/CMakeFiles/Server.dir/build: ../bin/Server
 .PHONY : src/Server/CMakeFiles/Server.dir/build
 
 src/Server/CMakeFiles/Server.dir/clean:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server && $(CMAKE_COMMAND) -P CMakeFiles/Server.dir/cmake_clean.cmake
+	cd /home/jossieee/cpp-imsoftware/build/src/Server && $(CMAKE_COMMAND) -P CMakeFiles/Server.dir/cmake_clean.cmake
 .PHONY : src/Server/CMakeFiles/Server.dir/clean
 
 src/Server/CMakeFiles/Server.dir/depend:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /media/wade/Documents/Project/实验楼/C++实现即时通讯软件 /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Server /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server/CMakeFiles/Server.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/jossieee/cpp-imsoftware/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/jossieee/cpp-imsoftware /home/jossieee/cpp-imsoftware/src/Server /home/jossieee/cpp-imsoftware/build /home/jossieee/cpp-imsoftware/build/src/Server /home/jossieee/cpp-imsoftware/build/src/Server/CMakeFiles/Server.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/Server/CMakeFiles/Server.dir/depend
 

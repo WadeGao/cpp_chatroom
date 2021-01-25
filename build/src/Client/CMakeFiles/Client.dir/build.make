@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件
+CMAKE_SOURCE_DIR = /home/jossieee/cpp-imsoftware
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build
+CMAKE_BINARY_DIR = /home/jossieee/cpp-imsoftware/build
 
 # Include any dependencies generated for this target.
 include src/Client/CMakeFiles/Client.dir/depend.make
@@ -59,29 +59,29 @@ include src/Client/CMakeFiles/Client.dir/flags.make
 
 src/Client/CMakeFiles/Client.dir/Client.cpp.o: src/Client/CMakeFiles/Client.dir/flags.make
 src/Client/CMakeFiles/Client.dir/Client.cpp.o: ../src/Client/Client.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/Client/CMakeFiles/Client.dir/Client.cpp.o"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Client.dir/Client.cpp.o -c /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/Client.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/Client/CMakeFiles/Client.dir/Client.cpp.o"
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Client.dir/Client.cpp.o -c /home/jossieee/cpp-imsoftware/src/Client/Client.cpp
 
 src/Client/CMakeFiles/Client.dir/Client.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Client.dir/Client.cpp.i"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/Client.cpp > CMakeFiles/Client.dir/Client.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jossieee/cpp-imsoftware/src/Client/Client.cpp > CMakeFiles/Client.dir/Client.cpp.i
 
 src/Client/CMakeFiles/Client.dir/Client.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Client.dir/Client.cpp.s"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/Client.cpp -o CMakeFiles/Client.dir/Client.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jossieee/cpp-imsoftware/src/Client/Client.cpp -o CMakeFiles/Client.dir/Client.cpp.s
 
 src/Client/CMakeFiles/Client.dir/ClientMain.cpp.o: src/Client/CMakeFiles/Client.dir/flags.make
 src/Client/CMakeFiles/Client.dir/ClientMain.cpp.o: ../src/Client/ClientMain.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/Client/CMakeFiles/Client.dir/ClientMain.cpp.o"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Client.dir/ClientMain.cpp.o -c /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/ClientMain.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/Client/CMakeFiles/Client.dir/ClientMain.cpp.o"
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Client.dir/ClientMain.cpp.o -c /home/jossieee/cpp-imsoftware/src/Client/ClientMain.cpp
 
 src/Client/CMakeFiles/Client.dir/ClientMain.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Client.dir/ClientMain.cpp.i"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/ClientMain.cpp > CMakeFiles/Client.dir/ClientMain.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jossieee/cpp-imsoftware/src/Client/ClientMain.cpp > CMakeFiles/Client.dir/ClientMain.cpp.i
 
 src/Client/CMakeFiles/Client.dir/ClientMain.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Client.dir/ClientMain.cpp.s"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/ClientMain.cpp -o CMakeFiles/Client.dir/ClientMain.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jossieee/cpp-imsoftware/src/Client/ClientMain.cpp -o CMakeFiles/Client.dir/ClientMain.cpp.s
 
 # Object files for target Client
 Client_OBJECTS = \
@@ -95,8 +95,8 @@ Client_EXTERNAL_OBJECTS =
 ../bin/Client: src/Client/CMakeFiles/Client.dir/ClientMain.cpp.o
 ../bin/Client: src/Client/CMakeFiles/Client.dir/build.make
 ../bin/Client: src/Client/CMakeFiles/Client.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable ../../../bin/Client"
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Client.dir/link.txt --verbose=$(VERBOSE)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/jossieee/cpp-imsoftware/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable ../../../bin/Client"
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Client.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/Client/CMakeFiles/Client.dir/build: ../bin/Client
@@ -104,10 +104,10 @@ src/Client/CMakeFiles/Client.dir/build: ../bin/Client
 .PHONY : src/Client/CMakeFiles/Client.dir/build
 
 src/Client/CMakeFiles/Client.dir/clean:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client && $(CMAKE_COMMAND) -P CMakeFiles/Client.dir/cmake_clean.cmake
+	cd /home/jossieee/cpp-imsoftware/build/src/Client && $(CMAKE_COMMAND) -P CMakeFiles/Client.dir/cmake_clean.cmake
 .PHONY : src/Client/CMakeFiles/Client.dir/clean
 
 src/Client/CMakeFiles/Client.dir/depend:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /media/wade/Documents/Project/实验楼/C++实现即时通讯软件 /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client/CMakeFiles/Client.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/jossieee/cpp-imsoftware/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/jossieee/cpp-imsoftware /home/jossieee/cpp-imsoftware/src/Client /home/jossieee/cpp-imsoftware/build /home/jossieee/cpp-imsoftware/build/src/Client /home/jossieee/cpp-imsoftware/build/src/Client/CMakeFiles/Client.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/Client/CMakeFiles/Client.dir/depend
 

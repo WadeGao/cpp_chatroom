@@ -38,17 +38,17 @@ sys/types.h
 unistd.h
 -
 
-/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/Client.cpp
+/home/jossieee/cpp-imsoftware/src/Client/Client.cpp
 Client.h
-/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/Client.h
+/home/jossieee/cpp-imsoftware/src/Client/Client.h
 iostream
 -
 utility
 -
 
-/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/ClientMain.cpp
+/home/jossieee/cpp-imsoftware/src/Client/ClientMain.cpp
 Client.h
-/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/Client.h
+/home/jossieee/cpp-imsoftware/src/Client/Client.h
 iostream
 -
 

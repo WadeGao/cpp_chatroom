@@ -6,5 +6,5 @@ CXX_FLAGS =   -std=gnu++14
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/../../include 
+CXX_INCLUDES = -I/home/jossieee/cpp-imsoftware/src/Client/../../include 
 

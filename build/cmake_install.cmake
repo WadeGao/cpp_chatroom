@@ -1,4 +1,4 @@
-# Install script for directory: /media/wade/Documents/Project/实验楼/C++实现即时通讯软件
+# Install script for directory: /home/jossieee/cpp-imsoftware
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,8 +39,8 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Client/cmake_install.cmake")
-  include("/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server/cmake_install.cmake")
+  include("/home/jossieee/cpp-imsoftware/build/src/Client/cmake_install.cmake")
+  include("/home/jossieee/cpp-imsoftware/build/src/Server/cmake_install.cmake")
 
 endif()
 
@@ -52,5 +52,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/jossieee/cpp-imsoftware/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

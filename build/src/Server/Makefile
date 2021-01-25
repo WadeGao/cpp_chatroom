@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件
+CMAKE_SOURCE_DIR = /home/jossieee/cpp-imsoftware
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build
+CMAKE_BINARY_DIR = /home/jossieee/cpp-imsoftware/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,14 +80,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(CMAKE_COMMAND) -E cmake_progress_start /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/src/Server/CMakeFiles/progress.marks
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build/CMakeFiles 0
+	cd /home/jossieee/cpp-imsoftware/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/jossieee/cpp-imsoftware/build/CMakeFiles /home/jossieee/cpp-imsoftware/build/src/Server/CMakeFiles/progress.marks
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jossieee/cpp-imsoftware/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/clean
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/clean
 .PHONY : clean
 
 # The main clean target
@@ -97,22 +97,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/preinstall
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/preinstall
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/jossieee/cpp-imsoftware/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/Server/CMakeFiles/Server.dir/rule:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/CMakeFiles/Server.dir/rule
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f CMakeFiles/Makefile2 src/Server/CMakeFiles/Server.dir/rule
 .PHONY : src/Server/CMakeFiles/Server.dir/rule
 
 # Convenience name for target.
@@ -122,7 +122,7 @@ Server: src/Server/CMakeFiles/Server.dir/rule
 
 # fast build rule for target.
 Server/fast:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/build
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/build
 .PHONY : Server/fast
 
 Server.o: Server.cpp.o
@@ -131,7 +131,7 @@ Server.o: Server.cpp.o
 
 # target to build an object file
 Server.cpp.o:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/Server.cpp.o
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/Server.cpp.o
 .PHONY : Server.cpp.o
 
 Server.i: Server.cpp.i
@@ -140,7 +140,7 @@ Server.i: Server.cpp.i
 
 # target to preprocess a source file
 Server.cpp.i:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/Server.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/Server.cpp.i
 .PHONY : Server.cpp.i
 
 Server.s: Server.cpp.s
@@ -149,7 +149,7 @@ Server.s: Server.cpp.s
 
 # target to generate assembly for a file
 Server.cpp.s:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/Server.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/Server.cpp.s
 .PHONY : Server.cpp.s
 
 ServerMain.o: ServerMain.cpp.o
@@ -158,7 +158,7 @@ ServerMain.o: ServerMain.cpp.o
 
 # target to build an object file
 ServerMain.cpp.o:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/ServerMain.cpp.o
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/ServerMain.cpp.o
 .PHONY : ServerMain.cpp.o
 
 ServerMain.i: ServerMain.cpp.i
@@ -167,7 +167,7 @@ ServerMain.i: ServerMain.cpp.i
 
 # target to preprocess a source file
 ServerMain.cpp.i:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/ServerMain.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/ServerMain.cpp.i
 .PHONY : ServerMain.cpp.i
 
 ServerMain.s: ServerMain.cpp.s
@@ -176,7 +176,7 @@ ServerMain.s: ServerMain.cpp.s
 
 # target to generate assembly for a file
 ServerMain.cpp.s:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/ServerMain.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/ServerMain.cpp.s
 .PHONY : ServerMain.cpp.s
 
 __/Common/Database.o: __/Common/Database.cpp.o
@@ -185,7 +185,7 @@ __/Common/Database.o: __/Common/Database.cpp.o
 
 # target to build an object file
 __/Common/Database.cpp.o:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.o
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.o
 .PHONY : __/Common/Database.cpp.o
 
 __/Common/Database.i: __/Common/Database.cpp.i
@@ -194,7 +194,7 @@ __/Common/Database.i: __/Common/Database.cpp.i
 
 # target to preprocess a source file
 __/Common/Database.cpp.i:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.i
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.i
 .PHONY : __/Common/Database.cpp.i
 
 __/Common/Database.s: __/Common/Database.cpp.s
@@ -203,7 +203,7 @@ __/Common/Database.s: __/Common/Database.cpp.s
 
 # target to generate assembly for a file
 __/Common/Database.cpp.s:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.s
+	cd /home/jossieee/cpp-imsoftware/build && $(MAKE) -f src/Server/CMakeFiles/Server.dir/build.make src/Server/CMakeFiles/Server.dir/__/Common/Database.cpp.s
 .PHONY : __/Common/Database.cpp.s
 
 # Help Target
@@ -235,6 +235,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/jossieee/cpp-imsoftware/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

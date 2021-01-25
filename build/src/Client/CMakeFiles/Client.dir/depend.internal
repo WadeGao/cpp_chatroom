@@ -4,8 +4,8 @@
 src/Client/CMakeFiles/Client.dir/Client.cpp.o
  ../include/Client.h
  ../include/Common.h
- /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/Client.cpp
+ /home/jossieee/cpp-imsoftware/src/Client/Client.cpp
 src/Client/CMakeFiles/Client.dir/ClientMain.cpp.o
  ../include/Client.h
  ../include/Common.h
- /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client/ClientMain.cpp
+ /home/jossieee/cpp-imsoftware/src/Client/ClientMain.cpp

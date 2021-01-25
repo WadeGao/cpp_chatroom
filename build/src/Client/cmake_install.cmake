@@ -1,4 +1,4 @@
-# Install script for directory: /media/wade/Documents/Project/实验楼/C++实现即时通讯软件/src/Client
+# Install script for directory: /home/jossieee/cpp-imsoftware/src/Client
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
