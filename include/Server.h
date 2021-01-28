@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-12-20 21:00:25
- * @LastEditTime: 2020-12-25 11:27:56
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /IM_Software/Server.h
- */
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
@@ -18,12 +10,13 @@ class Server
 {
 private:
     int SendBroadcastMsg(int clientfd);
-    struct sockaddr_in serverAddr{};
+    struct sockaddr_in serverAddr;
     int listener;
     int epfd;
     std::list<int> client_list;
 
     Database db;
+    std::vector<char *> DB_IP_List;
     std::unordered_map<int, std::pair<std::string, std::string>> Fd2_ID_Nickname;
     std::unordered_map<std::string, bool> If_Duplicated_Loggin;
 

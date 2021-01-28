@@ -4,8 +4,14 @@
 
 Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), ClientPwd(std::move(pwd)), sock(0), pid(0), isClientWork(true), epfd(0)
 {
-    serverAddr.sin_family = PF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+    auto host = gethostbyname(SERVER_DOMAIN);
+    if (!host)
+    {
+        fprintf(stderr, "Can't resolve domain %s\n", SERVER_DOMAIN);
+        exit(EXIT_FAILURE);
+    }
+    serverAddr.sin_family = host->h_addrtype;
+    serverAddr.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr *)host->h_addr_list[0]));
     serverAddr.sin_port = htons(SERVER_PORT);
 }
 
@@ -16,7 +22,7 @@ void Client::Connect()
 
     //建立转发服务器连接
     //fprintf(stdout, "Connect to Server %s:%u\n", SERVER_IP, SERVER_PORT);
-    if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+    if ((sock = socket(serverAddr.sin_family, SOCK_STREAM, 0)) < 0)
     {
         fprintf(stderr, "socket() error\n");
         exit(EXIT_FAILURE);
@@ -24,7 +30,7 @@ void Client::Connect()
 
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
-        fprintf(stderr, "Can't connect to server error\n");
+        fprintf(stderr, "Can't connect to server\n");
         exit(EXIT_FAILURE);
     }
 
@@ -51,11 +57,9 @@ void Client::Connect()
 void Client::Start()
 {
     static struct epoll_event events[2];
-
     Connect();
 
-    pid = fork();
-    if (pid < 0)
+    if ((pid = fork()) < 0)
     {
         fprintf(stderr, "fork() error\n");
         close(sock);

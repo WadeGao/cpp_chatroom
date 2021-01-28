@@ -1,0 +1,8 @@
+/home/jossieee/cpp-imsoftware/build/CMakeFiles/rebuild_cache.dir
+/home/jossieee/cpp-imsoftware/build/CMakeFiles/edit_cache.dir
+/home/jossieee/cpp-imsoftware/build/src/Client/CMakeFiles/rebuild_cache.dir
+/home/jossieee/cpp-imsoftware/build/src/Client/CMakeFiles/edit_cache.dir
+/home/jossieee/cpp-imsoftware/build/src/Client/CMakeFiles/Client.dir
+/home/jossieee/cpp-imsoftware/build/src/Server/CMakeFiles/rebuild_cache.dir
+/home/jossieee/cpp-imsoftware/build/src/Server/CMakeFiles/edit_cache.dir
+/home/jossieee/cpp-imsoftware/build/src/Server/CMakeFiles/Server.dir

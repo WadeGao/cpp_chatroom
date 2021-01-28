@@ -3,9 +3,20 @@
 
 Server::Server() : listener(0), epfd(0)
 {
+    //服务器初始化
     serverAddr.sin_family = PF_INET;
+    serverAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
     serverAddr.sin_port = htons(SERVER_PORT);
-    serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+
+    //取得分布式数据库服务器IP地址
+    auto host = gethostbyname(DATABASE_DOMAIN);
+    if (!host)
+    {
+        fprintf(stderr, "Can't resolve Database domain: %s\n", DATABASE_DOMAIN);
+        exit(EXIT_FAILURE);
+    }
+    for (size_t i = 0; host->h_addr_list[i]; i++)
+        this->DB_IP_List.push_back(inet_ntoa(*(struct in_addr *)host->h_addr_list[i]));
 }
 
 Server::~Server() = default;
@@ -14,7 +25,7 @@ void Server::Init()
 {
     fprintf(stdout, "Init Server...\n");
 
-    if ((listener = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+    if ((listener = socket(serverAddr.sin_family, SOCK_STREAM, 0)) < 0)
     {
         fprintf(stderr, "listener error\n");
         exit(EXIT_FAILURE);
@@ -22,7 +33,7 @@ void Server::Init()
 
     if (bind(listener, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
-        fprintf(stderr, "bind error\n");
+        fprintf(stderr, "bind error: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -32,7 +43,7 @@ void Server::Init()
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stdout, "Start to listen: %s:%u\n", SERVER_IP, SERVER_PORT);
+    fprintf(stdout, "Start to listen local port: %u\n", SERVER_PORT);
 
     if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
     {
@@ -43,9 +54,9 @@ void Server::Init()
     addfd(epfd, listener, true);
 
     //连接到数据库
-    if (!this->db.ConnectMySQL(DATABASE_IP, DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
+    if (!this->db.ConnectMySQL(this->DB_IP_List[0], DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
     {
-        fprintf(stderr, "Failed to Connect Database.\n");
+        fprintf(stderr, "Can't Connect to Database.\n");
         exit(FAIL_CONNECT_DB);
     }
 }
@@ -69,7 +80,9 @@ void Server::Start()
             auto sockfd = events[i].data.fd;
             if (sockfd == listener)
             {
-                struct sockaddr_in client_address{};
+                struct sockaddr_in client_address
+                {
+                };
                 socklen_t client_addrLength = sizeof(struct sockaddr_in);
                 auto clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
 
@@ -95,10 +108,10 @@ void Server::Start()
                     close(clientfd);
                     fprintf(stderr, "\033[31mDenied a duplicated user's connection\n\033[0m");
                     continue;
-                    //至此账号单例检查已通过
+                    //账号重复登录，拒绝服务
                 }
-
-                // 查数据库完善信息，并添加信息到系统文件描述表和映射表
+                //至此账号单例检查已通过
+                //查数据库完善信息，并添加信息到系统文件描述表和映射表
                 this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
 
                 addfd(epfd, clientfd, true);

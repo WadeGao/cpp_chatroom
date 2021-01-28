@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 1970-01-01 08:00:00
- * @LastEditTime: 2020-12-22 21:47:38
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /4Database/Database.cpp
- */
 #include "Database.h"
 
 Database::Database()
