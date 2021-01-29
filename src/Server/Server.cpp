@@ -63,6 +63,7 @@ void Server::Init()
 
 void Server::Start()
 {
+    //TODO: 搞文件传输
     static struct epoll_event events[EPOLL_SIZE];
     Init();
     while (true)
@@ -94,14 +95,28 @@ void Server::Start()
 
                 auto vectorID_Pwd = this->ShakeHandMsgParser(ID_Pwd_buf);
 
-                if (!this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1)))
+                auto authVerifyStatus = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
+                if (authVerifyStatus != CHECK_SUCCESS)
                 {
                     close(clientfd);
-                    fprintf(stderr, "\033[31mAccount Verification Failed! Account not exists or wrong password!\n\033[0m");
+
+                    switch (authVerifyStatus)
+                    {
+                    case CLIENTID_NOT_EXIST:
+                        fprintf(stderr, "\033[31mAccount Verification Failed! Account not exist!\n\033[0m");
+                        break;
+                    case WRONG_CLIENT_PASSWORD:
+                        fprintf(stderr, "\033[31mAccount Verification Failed! Account exists but wrong password!\n\033[0m");
+                        break;
+                    default:
+                        break;
+                    }
+
                     continue;
-                    //至此账号已经通过核查，账号真实存在，提供的口令也正确
+                    //身份校验失败，拒绝服务
                 }
 
+                //至此账号已经通过核查，账号真实存在，提供的口令也正确
                 //检查是否同一账号登录多次
                 if (this->IsDuplicatedLoggin(vectorID_Pwd.at(0)))
                 {
@@ -110,6 +125,7 @@ void Server::Start()
                     continue;
                     //账号重复登录，拒绝服务
                 }
+
                 //至此账号单例检查已通过
                 //查数据库完善信息，并添加信息到系统文件描述表和映射表
                 this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
@@ -211,7 +227,7 @@ void Server::RemoveMappingInfo(const int clientfd)
     this->client_list.remove(clientfd);
 }
 
-bool Server::AccountVerification(const std::string &Account, const std::string &Pwd)
+size_t Server::AccountVerification(const std::string &Account, const std::string &Pwd)
 {
     auto CheckIfAccountExist = [&Account, this]() -> bool {
         const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + Account + "';";
@@ -226,15 +242,15 @@ bool Server::AccountVerification(const std::string &Account, const std::string &
     if (!CheckIfAccountExist())
     {
         fprintf(stderr, "Account %s not exists.\n", Account.c_str());
-        return false;
+        return CLIENTID_NOT_EXIST;
     }
 
     if (!CheckPassword())
     {
         fprintf(stderr, "Invalid password!\n");
-        return false;
+        return WRONG_CLIENT_PASSWORD;
     }
-    return true;
+    return CHECK_SUCCESS;
 }
 
 std::string Server::GetNickName(const std::string &ClientID)

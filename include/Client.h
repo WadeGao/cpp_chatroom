@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 1969-12-31 16:00:00
+ * @LastEditTime: 2021-01-28 16:56:08
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: /cpp-imsoftware/include/Client.h
+ */
 #ifndef __CLIENT_H__
 #define __CLIENT_H__
 
@@ -23,7 +31,6 @@ public:
     Client(std::string id, std::string pwd);
     ~Client();
     void Start();
-
     void Close();
 };
 

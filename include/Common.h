@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 1969-12-31 16:00:00
+ * @LastEditTime: 2021-01-28 17:47:31
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: /cpp-imsoftware/include/Common.h
+ */
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
@@ -31,17 +39,17 @@
 #define DATABASE_ADMIN "root"
 #define DATABASE_PWD "zsy19990607"
 
-enum FAILED_CODE
+enum CHECK_CODE
 {
-    FAIL_CONNECT_DB = 1,
+    CHECK_SUCCESS = 1,
+    FAIL_CONNECT_DB,
     CLIENTID_NOT_EXIST,
-    WRONG_CLIENT_PASSWORD
+    WRONG_CLIENT_PASSWORD,
 };
+
 static void addfd(int epollfd, int fd, bool enable_et)
 {
-    struct epoll_event ev
-    {
-    };
+    struct epoll_event ev;
     ev.data.fd = fd;
     ev.events = EPOLLIN;
     if (enable_et)

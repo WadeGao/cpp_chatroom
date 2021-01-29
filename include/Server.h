@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 1969-12-31 16:00:00
+ * @LastEditTime: 2021-01-28 17:45:16
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: /cpp-imsoftware/include/Server.h
+ */
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
@@ -21,7 +29,7 @@ private:
     std::unordered_map<std::string, bool> If_Duplicated_Loggin;
 
     //服务端账号身份校核
-    bool AccountVerification(const std::string &ClientID, const std::string &ClientPwd);
+    size_t AccountVerification(const std::string &ClientID, const std::string &ClientPwd);
     //服务端查询数据库获取账号昵称
     std::string GetNickName(const std::string &ClientID);
     //如果返回值为true，代表此账号已经登录，应该拒绝提供服务

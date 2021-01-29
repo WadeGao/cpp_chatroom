@@ -1,6 +1,6 @@
-#include "Client.h"
 #include <iostream>
 #include <utility>
+#include "Client.h"
 
 Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), ClientPwd(std::move(pwd)), sock(0), pid(0), isClientWork(true), epfd(0)
 {
@@ -22,11 +22,21 @@ void Client::Connect()
 
     //建立转发服务器连接
     //fprintf(stdout, "Connect to Server %s:%u\n", SERVER_IP, SERVER_PORT);
+
+    //TODO:钩子函数调用器
+    auto exitJob_sock = [](int status, void *fd) -> void {
+        auto resolved_fd = *((int *)fd);
+        close(resolved_fd);
+        fprintf(stdout, "file descriptor %d closed\n", resolved_fd);
+    };
+
     if ((sock = socket(serverAddr.sin_family, SOCK_STREAM, 0)) < 0)
     {
         fprintf(stderr, "socket() error\n");
         exit(EXIT_FAILURE);
     }
+
+    on_exit(exitJob_sock, &sock);
 
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
@@ -46,6 +56,8 @@ void Client::Connect()
         exit(EXIT_FAILURE);
     }
 
+    on_exit(exitJob_sock, &epfd);
+
     addfd(epfd, sock, true);
     addfd(epfd, pipe_fd[0], true);
 
@@ -62,7 +74,7 @@ void Client::Start()
     if ((pid = fork()) < 0)
     {
         fprintf(stderr, "fork() error\n");
-        close(sock);
+        //close(sock);
         exit(EXIT_FAILURE);
     }
     else if (!pid)
@@ -100,7 +112,7 @@ void Client::Start()
                     if (!ret)
                     {
                         fprintf(stderr, "Server closed.\n");
-                        close(sock);
+                        //close(sock);
                         isClientWork = false;
                     }
                     else
@@ -122,7 +134,7 @@ void Client::Close()
     if (pid)
     {
         close(pipe_fd[0]);
-        close(sock);
+        //close(sock);
     }
     else
         close(pipe_fd[1]);
