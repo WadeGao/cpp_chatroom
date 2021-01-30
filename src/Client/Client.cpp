@@ -20,9 +20,6 @@ Client::~Client() = default;
 void Client::Connect()
 {
 
-    //建立转发服务器连接
-    //fprintf(stdout, "Connect to Server %s:%u\n", SERVER_IP, SERVER_PORT);
-
     //TODO:钩子函数调用器
     auto exitJob_sock = [](int status, void *fd) -> void {
         auto resolved_fd = *((int *)fd);
@@ -62,8 +59,49 @@ void Client::Connect()
     addfd(epfd, pipe_fd[0], true);
 
     //告知用户身份
+    bzero(msg, BUF_SIZE);
     sprintf(msg, "[%lu]%s%s", this->ClientID.size(), this->ClientID.c_str(), this->ClientPwd.c_str());
-    send(sock, msg, BUF_SIZE, 0);
+
+    if (send(sock, msg, BUF_SIZE, 0) < 0)
+    {
+        fprintf(stderr, "send() auth info error\n");
+        Close();
+        exit(EXIT_FAILURE);
+    }
+
+    bzero(msg, BUF_SIZE);
+    auto fd_status = fcntl(sock, F_GETFD, 0);
+    fcntl(sock, F_SETFL, fcntl(sock, F_GETFD, 0) & ~O_NONBLOCK);
+    auto len = recv(sock, msg, BUF_SIZE, 0);
+    fcntl(sock, F_SETFL, fd_status);
+    if (len < 0)
+    {
+        fprintf(stderr, "Error occurs, %s\n", strerror(errno));
+        this->Close();
+        exit(EXIT_FAILURE);
+    }
+    auto AuthStatus = this->LoginAuthInfoParser(msg);
+
+    switch (AuthStatus)
+    {
+    case CLIENTID_NOT_EXIST:
+        fprintf(stderr, "Account not exists, please check your account\n");
+        Close();
+        exit(CLIENTID_NOT_EXIST);
+        break;
+    case WRONG_CLIENT_PASSWORD:
+        fprintf(stderr, "Account's password error, please check your password\n");
+        Close();
+        exit(WRONG_CLIENT_PASSWORD);
+        break;
+    case DUPLICATED_LOGIN:
+        fprintf(stderr, "Account has been online!\n");
+        Close();
+        exit(DUPLICATED_LOGIN);
+        break;
+    default:
+        break;
+    };
 }
 
 void Client::Start()
@@ -85,7 +123,7 @@ void Client::Start()
         {
             bzero(msg, BUF_SIZE);
             fgets(msg, BUF_SIZE, stdin);
-            if (strncasecmp(msg, LOGOUT, strlen(LOGOUT)) == 0)
+            if (!strncasecmp(msg, LOGOUT, strlen(LOGOUT)))
                 isClientWork = false;
             else
             {
@@ -108,8 +146,7 @@ void Client::Start()
                 bzero(msg, BUF_SIZE);
                 if (events[i].data.fd == sock) //服务端发来消息
                 {
-                    int ret = recv(sock, msg, BUF_SIZE, 0);
-                    if (!ret)
+                    if (!recv(sock, msg, BUF_SIZE, 0))
                     {
                         fprintf(stderr, "Server closed.\n");
                         //close(sock);
@@ -119,10 +156,7 @@ void Client::Start()
                         fprintf(stdout, "%s\n", msg);
                 }
                 else //子进程写入事件发生，父进程处理并发送服务端
-                {
-                    int ret = read(events[i].data.fd, msg, BUF_SIZE);
-                    !ret ? isClientWork = false : send(sock, msg, BUF_SIZE, 0);
-                }
+                    !read(events[i].data.fd, msg, BUF_SIZE) ? isClientWork = false : send(sock, msg, BUF_SIZE, 0);
             }
         }
     }
@@ -138,4 +172,16 @@ void Client::Close()
     }
     else
         close(pipe_fd[1]);
+}
+
+size_t Client::LoginAuthInfoParser(const std::string &str)
+{
+    //TODO:这个函数有错误
+    bool flag = ((str.size() == 12) && (str.substr(0, 10) == "Login Code"));
+    if (!flag)
+    {
+        fprintf(stderr, "Error package format\n");
+        this->Close();
+    }
+    return size_t(str.at(11));
 }

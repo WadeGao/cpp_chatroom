@@ -78,17 +78,17 @@ void Server::Start()
 
         for (int i = 0; i < epoll_events_count; i++)
         {
+            char msg[BUF_SIZE] = {0};
             auto sockfd = events[i].data.fd;
             if (sockfd == listener)
             {
-                struct sockaddr_in client_address
-                {
-                };
+                struct sockaddr_in client_address;
                 socklen_t client_addrLength = sizeof(struct sockaddr_in);
                 auto clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
 
                 //接收首次通信时由客户端告知的连接用户身份信息
                 char ID_Pwd_buf[BUF_SIZE] = {0};
+                //TODO:这里，recv被阻塞，等待新连接用户的消息
                 auto len = recv(clientfd, ID_Pwd_buf, BUF_SIZE, 0);
                 if (!len)
                     continue;
@@ -96,6 +96,16 @@ void Server::Start()
                 auto vectorID_Pwd = this->ShakeHandMsgParser(ID_Pwd_buf);
 
                 auto authVerifyStatus = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
+
+                bzero(msg, BUF_SIZE);
+                sprintf(msg, DENY_SERVE, char(authVerifyStatus));
+                if (send(clientfd, msg, BUF_SIZE, 0) < 0)
+                {
+                    fprintf(stderr, "send() auth info error\n");
+                    Close();
+                    exit(EXIT_FAILURE);
+                }
+
                 if (authVerifyStatus != CHECK_SUCCESS)
                 {
                     close(clientfd);
@@ -103,30 +113,22 @@ void Server::Start()
                     switch (authVerifyStatus)
                     {
                     case CLIENTID_NOT_EXIST:
-                        fprintf(stderr, "\033[31mAccount Verification Failed! Account not exist!\n\033[0m");
+                        fprintf(stderr, "\033[31mAccount Verification Failed! Account %s not exist!\n\033[0m", vectorID_Pwd.at(0).c_str());
                         break;
                     case WRONG_CLIENT_PASSWORD:
-                        fprintf(stderr, "\033[31mAccount Verification Failed! Account exists but wrong password!\n\033[0m");
+                        fprintf(stderr, "\033[31mAccount Verification Failed! Account %s exists but wrong password!\n\033[0m", vectorID_Pwd.at(0).c_str());
+                        break;
+                    case DUPLICATED_LOGIN:
+                        fprintf(stderr, "\033[31mDenied a duplicated connection of %s\n\033[0m", vectorID_Pwd.at(0).c_str());
                         break;
                     default:
                         break;
                     }
 
                     continue;
-                    //身份校验失败，拒绝服务
                 }
 
-                //至此账号已经通过核查，账号真实存在，提供的口令也正确
-                //检查是否同一账号登录多次
-                if (this->IsDuplicatedLoggin(vectorID_Pwd.at(0)))
-                {
-                    close(clientfd);
-                    fprintf(stderr, "\033[31mDenied a duplicated user's connection\n\033[0m");
-                    continue;
-                    //账号重复登录，拒绝服务
-                }
-
-                //至此账号单例检查已通过
+                //至此身份核查已通过
                 //查数据库完善信息，并添加信息到系统文件描述表和映射表
                 this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
 
@@ -135,7 +137,7 @@ void Server::Start()
                 fprintf(stdout, "Add new clientfd = %d to epoll. Now there are %lu client(s) int the chat room\n", clientfd, client_list.size());
                 fprintf(stdout, "Welcome Message\n");
 
-                char msg[BUF_SIZE] = {0};
+                bzero(msg, BUF_SIZE);
                 sprintf(msg, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
                 if (send(clientfd, msg, BUF_SIZE, 0) < 0)
                 {
@@ -168,9 +170,7 @@ int Server::SendBroadcastMsg(const int clientfd)
     if (!len)
     {
         close(clientfd);
-
         this->RemoveMappingInfo(clientfd);
-
         fprintf(stdout, "\033[31mClient %d closed.\n\033[0m", clientfd);
         fprintf(stdout, "Now there are %lu client(s) in the chat room.\n", client_list.size());
     }
@@ -187,6 +187,7 @@ int Server::SendBroadcastMsg(const int clientfd)
             if (iter != clientfd)
                 if (send(iter, msg, BUF_SIZE, 0) < 0)
                     return -1;
+            //this->client_list.remove(clientfd);
         }
     }
     return len;
@@ -229,6 +230,9 @@ void Server::RemoveMappingInfo(const int clientfd)
 
 size_t Server::AccountVerification(const std::string &Account, const std::string &Pwd)
 {
+    //账号不存在
+    //账号密码错误
+    //重复登录
     auto CheckIfAccountExist = [&Account, this]() -> bool {
         const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + Account + "';";
         return (this->db.ReadMySQL(sql).size() == 1);
@@ -238,18 +242,18 @@ size_t Server::AccountVerification(const std::string &Account, const std::string
         auto ret = this->db.ReadMySQL(sql);
         return (ret.size() == 1 && ret.at(0).at(0) == Pwd);
     };
-
+    //账号不存在
     if (!CheckIfAccountExist())
-    {
-        fprintf(stderr, "Account %s not exists.\n", Account.c_str());
         return CLIENTID_NOT_EXIST;
-    }
 
+    //密码错误
     if (!CheckPassword())
-    {
-        fprintf(stderr, "Invalid password!\n");
         return WRONG_CLIENT_PASSWORD;
-    }
+
+    //账号重复登录
+    if (this->IsDuplicatedLoggin(Account))
+        return DUPLICATED_LOGIN;
+
     return CHECK_SUCCESS;
 }
 
