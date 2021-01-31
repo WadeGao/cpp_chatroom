@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-30 16:17:50
+ * @LastEditTime: 2021-01-31 17:37:23
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -17,7 +17,7 @@
 class Server
 {
 private:
-    int SendBroadcastMsg(int clientfd);
+    ssize_t SendBroadcastMsg(int clientfd);
     struct sockaddr_in serverAddr;
     int listener;
     int epfd;

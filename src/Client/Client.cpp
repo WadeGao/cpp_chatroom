@@ -11,7 +11,12 @@ Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), Clien
         exit(EXIT_FAILURE);
     }
     serverAddr.sin_family = host->h_addrtype;
-    serverAddr.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr *)host->h_addr_list[0]));
+
+    for (size_t i = 0; host->h_addr_list[i]; i++)
+        this->ServerIP_List.push_back(inet_ntoa(*(struct in_addr *)host->h_addr_list[i]));
+    //TODO:转发服务器负载均衡
+    //serverAddr.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr *)host->h_addr_list[0]));
+    serverAddr.sin_addr.s_addr = inet_addr(this->ServerIP_List.at(LoadBalancer(this->ServerIP_List.size())));
     serverAddr.sin_port = htons(SERVER_PORT);
 }
 
@@ -20,12 +25,6 @@ Client::~Client() = default;
 void Client::Connect()
 {
 
-    //TODO:钩子函数调用器
-    auto exitJob_sock = [](int status, void *fd) -> void {
-        auto resolved_fd = *((int *)fd);
-        close(resolved_fd);
-    };
-
     if ((sock = socket(serverAddr.sin_family, SOCK_STREAM, 0)) < 0)
     {
         fprintf(stderr, "socket() error\n");
@@ -33,7 +32,6 @@ void Client::Connect()
     }
 
     fdAutoCloser(sock);
-    //on_exit(exitJob_sock, &sock);
 
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
@@ -54,35 +52,44 @@ void Client::Connect()
     }
 
     fdAutoCloser(epfd);
-    //on_exit(exitJob_sock, &epfd);
 
     addfd(epfd, sock, true);
     addfd(epfd, pipe_fd[0], true);
 
     //告知用户身份
-    bzero(msg, BUF_SIZE);
-    sprintf(msg, "[%lu]%s%s", this->ClientID.size(), this->ClientID.c_str(), this->ClientPwd.c_str());
+    this->TellMyIdentity();
+    this->RecvLoginStatus();
+}
 
-    if (send(sock, msg, strlen(msg), 0) < 0)
+//向服务器发送输入的ID和密码
+void Client::TellMyIdentity()
+{
+    bzero(this->msg, BUF_SIZE);
+    sprintf(this->msg, "[%lu]%s%s", this->ClientID.size(), this->ClientID.c_str(), this->ClientPwd.c_str());
+
+    if (send(this->sock, this->msg, strlen(this->msg), 0) < 0)
     {
         fprintf(stderr, "send() auth info error\n");
-        Close();
+        this->Close();
         exit(EXIT_FAILURE);
     }
+}
 
-    bzero(msg, BUF_SIZE);
+void Client::RecvLoginStatus()
+{
+    bzero(this->msg, BUF_SIZE);
+    auto old_fd_status = fcntl(this->sock, F_GETFD, 0);
+    fcntl(this->sock, F_SETFL, fcntl(this->sock, F_GETFD, 0) & ~O_NONBLOCK);
+    auto len = recv(this->sock, this->msg, BUF_SIZE, 0);
+    fcntl(this->sock, F_SETFL, old_fd_status);
 
-    auto old_fd_status = fcntl(sock, F_GETFD, 0);
-    fcntl(sock, F_SETFL, fcntl(sock, F_GETFD, 0) & ~O_NONBLOCK);
-    auto len = recv(sock, msg, BUF_SIZE, 0);
-    fcntl(sock, F_SETFL, old_fd_status);
     if (len < 0)
     {
         fprintf(stderr, "Error occurs, %s\n", strerror(errno));
         this->Close();
         exit(EXIT_FAILURE);
     }
-    auto AuthStatus = this->LoginAuthInfoParser(msg);
+    auto AuthStatus = this->LoginAuthInfoParser(this->msg);
 
     switch (AuthStatus)
     {
@@ -151,7 +158,6 @@ void Client::Start()
                     if (!recv(sock, msg, BUF_SIZE, 0))
                     {
                         fprintf(stderr, "Server closed.\n");
-                        //close(sock);
                         isClientWork = false;
                     }
                     else
@@ -165,20 +171,10 @@ void Client::Start()
     Close();
 }
 
-void Client::Close()
-{
-    if (pid)
-    {
-        close(pipe_fd[0]);
-        //close(sock);
-    }
-    else
-        close(pipe_fd[1]);
-}
+void Client::Close() { this->pid ? close(pipe_fd[0]) : close(pipe_fd[1]); }
 
 size_t Client::LoginAuthInfoParser(const std::string &str)
 {
-    //TODO:这个函数有错误
     bool flag = ((str.size() == 12) && (str.substr(0, 10) == "Login Code"));
     if (!flag)
     {

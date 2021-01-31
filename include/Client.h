@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-28 23:07:02
+ * @LastEditTime: 2021-01-31 19:25:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -25,10 +25,17 @@ private:
     std::string ClientID;
     std::string ClientPwd;
 
+    std::vector<char *> ServerIP_List;
+
     void Connect();
-    void Close();
+
+    void TellMyIdentity(); //向服务器发送输入的ID和密码
 
     size_t LoginAuthInfoParser(const std::string &str);
+
+    void RecvLoginStatus();
+
+    void Close();
 
 public:
     Client(std::string id, std::string pwd);

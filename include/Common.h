@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-31 16:14:49
+ * @LastEditTime: 2021-01-31 19:40:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -14,6 +14,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <fcntl.h>
 #include <iostream>
 #include <list>
@@ -70,6 +71,11 @@ static void fdAutoCloser(int fd)
 {
     auto exitJob_sock = [](int status, void *fd) -> void { close(*((int *)fd)); };
     on_exit(exitJob_sock, &fd);
+}
+
+static size_t LoadBalancer(const size_t totalSize)
+{
+    return rand() % totalSize;
 }
 
 #endif

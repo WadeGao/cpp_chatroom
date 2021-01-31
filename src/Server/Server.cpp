@@ -30,6 +30,7 @@ void Server::Init()
         fprintf(stderr, "listener error\n");
         exit(EXIT_FAILURE);
     }
+    //fdAutoCloser(listener);
 
     if (bind(listener, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
@@ -50,11 +51,12 @@ void Server::Init()
         fprintf(stderr, "epoll_create() error\n");
         exit(EXIT_FAILURE);
     }
-
+    //fdAutoCloser(epfd);
     addfd(epfd, listener, true);
 
     //连接到数据库
-    if (!this->db.ConnectMySQL(this->DB_IP_List[0], DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
+    //TODO:MySQL服务器负载均衡
+    if (!this->db.ConnectMySQL(this->DB_IP_List.at(LoadBalancer(this->DB_IP_List.size())), DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
     {
         fprintf(stderr, "Can't Connect to Database.\n");
         exit(FAIL_CONNECT_DB);
@@ -94,9 +96,9 @@ void Server::Start()
                     continue;
 
                 auto vectorID_Pwd = this->ShakeHandMsgParser(ID_Pwd_buf);
-
                 auto authVerifyStatus = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
 
+                //发送给客户端错误状态码
                 bzero(msg, BUF_SIZE);
                 sprintf(msg, DENY_SERVE, char(authVerifyStatus));
                 if (send(clientfd, msg, strlen(msg), 0) < 0)
@@ -105,7 +107,7 @@ void Server::Start()
                     Close();
                     exit(EXIT_FAILURE);
                 }
-
+                //打印错误记录
                 if (authVerifyStatus != CHECK_SUCCESS)
                 {
                     close(clientfd);
@@ -160,12 +162,12 @@ void Server::Start()
     Close();
 }
 
-int Server::SendBroadcastMsg(const int clientfd)
+ssize_t Server::SendBroadcastMsg(const int clientfd)
 {
     char buf[BUF_SIZE] = {0}, msg[BUF_SIZE] = {0};
     fprintf(stdout, "read from client %d\n", clientfd);
 
-    int len = recv(clientfd, buf, BUF_SIZE, 0);
+    auto len = recv(clientfd, buf, BUF_SIZE, 0);
 
     if (!len)
     {
@@ -200,12 +202,6 @@ void Server::Close() const
     close(epfd);
 }
 
-bool Server::IsDuplicatedLoggin(const std::string &ID)
-{
-    auto iter = this->If_Duplicated_Loggin.find(ID);
-    return !(iter == this->If_Duplicated_Loggin.end()) && iter->second;
-}
-
 void Server::AddMappingInfo(const int clientfd, const std::string &ID_buf)
 {
     //根据账号ID查数据库得到账号昵称
@@ -229,6 +225,12 @@ void Server::RemoveMappingInfo(const int clientfd)
     this->client_list.remove(clientfd);
 }
 
+bool Server::IsDuplicatedLoggin(const std::string &ID)
+{
+    auto iter = this->If_Duplicated_Loggin.find(ID);
+    return !(iter == this->If_Duplicated_Loggin.end()) && iter->second;
+}
+
 size_t Server::AccountVerification(const std::string &Account, const std::string &Pwd)
 {
     //账号不存在
@@ -243,6 +245,7 @@ size_t Server::AccountVerification(const std::string &Account, const std::string
         auto ret = this->db.ReadMySQL(sql);
         return (ret.size() == 1 && ret.at(0).at(0) == Pwd);
     };
+
     //账号不存在
     if (!CheckIfAccountExist())
         return CLIENTID_NOT_EXIST;
