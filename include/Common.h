@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-30 20:45:59
+ * @LastEditTime: 2021-01-31 16:14:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -64,6 +64,12 @@ static void addfd(int epollfd, int fd, bool enable_et)
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFD, 0) | O_NONBLOCK);
     //fprintf(stdout, "fd added to epoll.\n");
+}
+
+static void fdAutoCloser(int fd)
+{
+    auto exitJob_sock = [](int status, void *fd) -> void { close(*((int *)fd)); };
+    on_exit(exitJob_sock, &fd);
 }
 
 #endif

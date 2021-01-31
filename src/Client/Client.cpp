@@ -24,7 +24,6 @@ void Client::Connect()
     auto exitJob_sock = [](int status, void *fd) -> void {
         auto resolved_fd = *((int *)fd);
         close(resolved_fd);
-        fprintf(stdout, "file descriptor %d closed\n", resolved_fd);
     };
 
     if ((sock = socket(serverAddr.sin_family, SOCK_STREAM, 0)) < 0)
@@ -33,7 +32,8 @@ void Client::Connect()
         exit(EXIT_FAILURE);
     }
 
-    on_exit(exitJob_sock, &sock);
+    fdAutoCloser(sock);
+    //on_exit(exitJob_sock, &sock);
 
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
@@ -53,7 +53,8 @@ void Client::Connect()
         exit(EXIT_FAILURE);
     }
 
-    on_exit(exitJob_sock, &epfd);
+    fdAutoCloser(epfd);
+    //on_exit(exitJob_sock, &epfd);
 
     addfd(epfd, sock, true);
     addfd(epfd, pipe_fd[0], true);
@@ -70,10 +71,11 @@ void Client::Connect()
     }
 
     bzero(msg, BUF_SIZE);
-    auto fd_status = fcntl(sock, F_GETFD, 0);
+
+    auto old_fd_status = fcntl(sock, F_GETFD, 0);
     fcntl(sock, F_SETFL, fcntl(sock, F_GETFD, 0) & ~O_NONBLOCK);
     auto len = recv(sock, msg, BUF_SIZE, 0);
-    fcntl(sock, F_SETFL, fd_status);
+    fcntl(sock, F_SETFL, old_fd_status);
     if (len < 0)
     {
         fprintf(stderr, "Error occurs, %s\n", strerror(errno));
