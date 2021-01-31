@@ -63,7 +63,7 @@ void Client::Connect()
     bzero(msg, BUF_SIZE);
     sprintf(msg, "[%lu]%s%s", this->ClientID.size(), this->ClientID.c_str(), this->ClientPwd.c_str());
 
-    if (send(sock, msg, BUF_SIZE, 0) < 0)
+    if (send(sock, msg, strlen(msg), 0) < 0)
     {
         fprintf(stderr, "send() auth info error\n");
         Close();
@@ -158,7 +158,7 @@ void Client::Start()
                         fprintf(stdout, "%s\n", msg);
                 }
                 else //子进程写入事件发生，父进程处理并发送服务端
-                    !read(events[i].data.fd, msg, BUF_SIZE) ? isClientWork = false : send(sock, msg, BUF_SIZE, 0);
+                    !read(events[i].data.fd, msg, BUF_SIZE) ? isClientWork = false : send(sock, msg, strlen(msg), 0);
             }
         }
     }

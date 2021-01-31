@@ -99,7 +99,7 @@ void Server::Start()
 
                 bzero(msg, BUF_SIZE);
                 sprintf(msg, DENY_SERVE, char(authVerifyStatus));
-                if (send(clientfd, msg, BUF_SIZE, 0) < 0)
+                if (send(clientfd, msg, strlen(msg), 0) < 0)
                 {
                     fprintf(stderr, "send() auth info error\n");
                     Close();
@@ -139,7 +139,7 @@ void Server::Start()
 
                 bzero(msg, BUF_SIZE);
                 sprintf(msg, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
-                if (send(clientfd, msg, BUF_SIZE, 0) < 0)
+                if (send(clientfd, msg, strlen(msg), 0) < 0)
                 {
                     fprintf(stderr, "send() welcome msg error\n");
                     Close();
@@ -181,11 +181,12 @@ int Server::SendBroadcastMsg(const int clientfd)
             send(clientfd, CAUTION, strlen(CAUTION), 0);
             return len;
         }
+        bzero(msg, BUF_SIZE);
         sprintf(msg, SERVER_MSG, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str(), buf);
         for (const auto &iter : client_list)
         {
             if (iter != clientfd)
-                if (send(iter, msg, BUF_SIZE, 0) < 0)
+                if (send(iter, msg, strlen(msg), 0) < 0)
                     return -1;
             //this->client_list.remove(clientfd);
         }
