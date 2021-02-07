@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-31 19:40:05
+ * @LastEditTime: 2021-01-31 20:20:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -53,7 +53,7 @@ enum CHECK_CODE
 #define SERVER_MSG "\033[32m%s >>> %s\033[0m\a"
 #define LOGOUT "LOGOUT"
 #define CAUTION "\033[31mYou're the only one in the chat room!\033[0m"
-#define DENY_SERVE "Login Code:%c"
+#define LOGIN_CODE "Login Code:%c"
 
 static void addfd(int epollfd, int fd, bool enable_et)
 {
@@ -73,9 +73,6 @@ static void fdAutoCloser(int fd)
     on_exit(exitJob_sock, &fd);
 }
 
-static size_t LoadBalancer(const size_t totalSize)
-{
-    return rand() % totalSize;
-}
+static size_t LoadBalancer(const size_t totalSize) { return rand() % totalSize; }
 
 #endif

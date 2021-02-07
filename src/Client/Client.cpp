@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sys/wait.h>
 #include <utility>
 #include "Client.h"
 
@@ -117,6 +118,7 @@ void Client::Start()
 {
     static struct epoll_event events[2];
     Connect();
+    signal(SIGCHLD, handlerSIGCHLD);
 
     if ((pid = fork()) < 0)
     {
@@ -138,7 +140,7 @@ void Client::Start()
             {
                 if (write(pipe_fd[1], msg, strlen(msg) - 1) < 0)
                 {
-                    fprintf(stderr, "child process write error\n");
+                    //fprintf(stderr, "child process write error\n");
                     exit(EXIT_FAILURE);
                 }
             }
@@ -171,7 +173,7 @@ void Client::Start()
     Close();
 }
 
-void Client::Close() { this->pid ? close(pipe_fd[0]) : close(pipe_fd[1]); }
+void Client::Close() { !this->pid ? close(pipe_fd[1]) : close(pipe_fd[0]); }
 
 size_t Client::LoginAuthInfoParser(const std::string &str)
 {
@@ -182,4 +184,13 @@ size_t Client::LoginAuthInfoParser(const std::string &str)
         this->Close();
     }
     return size_t(str.at(11));
+}
+
+static void handlerSIGCHLD(int signo)
+{
+    pid_t PID;
+    int stat;
+    while ((PID = waitpid(-1, &stat, WNOHANG)) > 0)
+        fprintf(stdout, "child %d terminated\n", PID);
+    return;
 }

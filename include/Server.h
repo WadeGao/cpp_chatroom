@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-31 17:37:23
+ * @LastEditTime: 2021-01-31 20:27:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -17,6 +17,7 @@
 class Server
 {
 private:
+    char msg[BUF_SIZE]{0};
     ssize_t SendBroadcastMsg(int clientfd);
     struct sockaddr_in serverAddr;
     int listener;
@@ -40,6 +41,8 @@ private:
     void RemoveMappingInfo(int clientfd);
 
     std::vector<std::string> ShakeHandMsgParser(const std::string &msg_buf);
+
+    void SendLoginStatus(int clientfd, const size_t authVerifyStatusCode);
 
 public:
     Server();

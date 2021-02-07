@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-31 19:25:43
+ * @LastEditTime: 2021-02-03 15:02:04
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -36,6 +36,8 @@ private:
     void RecvLoginStatus();
 
     void Close();
+
+    //void handlerSIGCHLD(int signo);
 
 public:
     Client(std::string id, std::string pwd);

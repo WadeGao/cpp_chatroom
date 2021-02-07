@@ -80,14 +80,24 @@ void Server::Start()
 
         for (int i = 0; i < epoll_events_count; i++)
         {
-            char msg[BUF_SIZE] = {0};
+            //char msg[BUF_SIZE] = {0};
             auto sockfd = events[i].data.fd;
             if (sockfd == listener)
             {
                 struct sockaddr_in client_address;
                 socklen_t client_addrLength = sizeof(struct sockaddr_in);
                 auto clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
-
+                if (clientfd < 0)
+                {
+                    if (errno == EINTR)
+                        continue;
+                    else
+                    {
+                        fprintf(stderr, "\033[31maccept error\n\033[0m");
+                        this->Close();
+                        exit(EXIT_FAILURE);
+                    }
+                }
                 //接收首次通信时由客户端告知的连接用户身份信息
                 char ID_Pwd_buf[BUF_SIZE] = {0};
                 //TODO:这里，recv被阻塞，等待新连接用户的消息
@@ -96,23 +106,18 @@ void Server::Start()
                     continue;
 
                 auto vectorID_Pwd = this->ShakeHandMsgParser(ID_Pwd_buf);
-                auto authVerifyStatus = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
+                auto authVerifyStatusCode = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
 
-                //发送给客户端错误状态码
-                bzero(msg, BUF_SIZE);
-                sprintf(msg, DENY_SERVE, char(authVerifyStatus));
-                if (send(clientfd, msg, strlen(msg), 0) < 0)
-                {
-                    fprintf(stderr, "send() auth info error\n");
-                    Close();
-                    exit(EXIT_FAILURE);
-                }
+                //发送给客户端登录状态码
+                //TODO:Here!
+                this->SendLoginStatus(clientfd, authVerifyStatusCode);
+
                 //打印错误记录
-                if (authVerifyStatus != CHECK_SUCCESS)
+                if (authVerifyStatusCode != CHECK_SUCCESS)
                 {
                     close(clientfd);
 
-                    switch (authVerifyStatus)
+                    switch (authVerifyStatusCode)
                     {
                     case CLIENTID_NOT_EXIST:
                         fprintf(stderr, "\033[31mAccount Verification Failed! Account %s not exist!\n\033[0m", vectorID_Pwd.at(0).c_str());
@@ -160,6 +165,18 @@ void Server::Start()
         }
     }
     Close();
+}
+
+void Server::SendLoginStatus(int clientfd, const size_t authVerifyStatusCode)
+{
+    bzero(this->msg, BUF_SIZE);
+    sprintf(this->msg, LOGIN_CODE, char(authVerifyStatusCode));
+    if (send(clientfd, this->msg, strlen(this->msg), 0) < 0)
+    {
+        fprintf(stderr, "send() auth info error\n");
+        Close();
+        exit(EXIT_FAILURE);
+    }
 }
 
 ssize_t Server::SendBroadcastMsg(const int clientfd)
