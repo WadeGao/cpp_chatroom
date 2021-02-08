@@ -3,6 +3,15 @@
 #include <utility>
 #include "Client.h"
 
+static void handlerSIGCHLD(int signo)
+{
+    pid_t PID;
+    int stat;
+    while ((PID = waitpid(-1, &stat, WNOHANG)) > 0)
+        fprintf(stdout, "child %d terminated\n", PID);
+    return;
+}
+
 Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), ClientPwd(std::move(pwd)), sock(0), pid(0), isClientWork(true), epfd(0)
 {
     auto host = gethostbyname(SERVER_DOMAIN);
@@ -173,7 +182,7 @@ void Client::Start()
     Close();
 }
 
-void Client::Close() { !this->pid ? close(pipe_fd[1]) : close(pipe_fd[0]); }
+void Client::Close() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
 
 size_t Client::LoginAuthInfoParser(const std::string &str)
 {
@@ -184,13 +193,4 @@ size_t Client::LoginAuthInfoParser(const std::string &str)
         this->Close();
     }
     return size_t(str.at(11));
-}
-
-static void handlerSIGCHLD(int signo)
-{
-    pid_t PID;
-    int stat;
-    while ((PID = waitpid(-1, &stat, WNOHANG)) > 0)
-        fprintf(stdout, "child %d terminated\n", PID);
-    return;
 }
