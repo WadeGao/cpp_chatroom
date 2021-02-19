@@ -88,9 +88,11 @@ void Client::TellMyIdentity()
 void Client::RecvLoginStatus()
 {
     bzero(this->msg, BUF_SIZE);
+
     auto old_fd_status = fcntl(this->sock, F_GETFD, 0);
     fcntl(this->sock, F_SETFL, fcntl(this->sock, F_GETFD, 0) & ~O_NONBLOCK);
     auto len = recv(this->sock, this->msg, BUF_SIZE, 0);
+
     fcntl(this->sock, F_SETFL, old_fd_status);
 
     if (len < 0)

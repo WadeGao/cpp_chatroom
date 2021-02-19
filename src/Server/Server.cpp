@@ -32,6 +32,13 @@ void Server::Init()
     }
     //fdAutoCloser(listener);
 
+    const int reuse = 1;
+    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0)
+    {
+        fprintf(stderr, "setsockopt reuse addr error\n");
+        exit(EXIT_FAILURE);
+    }
+
     if (bind(listener, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
         fprintf(stderr, "bind error: %s\n", strerror(errno));
