@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-31 20:27:51
+ * @LastEditTime: 2021-02-21 12:01:28
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -14,18 +14,17 @@
 #include <unordered_map>
 #include <utility>
 
+#define BACK_LOG 1024
 class Server
 {
 private:
     char msg[BUF_SIZE]{0};
     ssize_t SendBroadcastMsg(int clientfd);
-    struct sockaddr_in serverAddr;
     int listener;
     int epfd;
     std::list<int> client_list;
 
     Database db;
-    std::vector<char *> DB_IP_List;
     std::unordered_map<int, std::pair<std::string, std::string>> Fd2_ID_Nickname;
     std::unordered_map<std::string, bool> If_Duplicated_Loggin;
 

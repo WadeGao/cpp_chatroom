@@ -3,55 +3,54 @@
 
 Server::Server() : listener(0), epfd(0)
 {
-    //服务器初始化
-    serverAddr.sin_family = PF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
-    serverAddr.sin_port = htons(SERVER_PORT);
-
-    //取得分布式数据库服务器IP地址
-    auto host = gethostbyname(DATABASE_DOMAIN);
-    if (!host)
+    addrinfo *ret, *cur, hints;
+    bzero(&hints, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_STREAM; /* Stream socket */
+    hints.ai_flags = AI_PASSIVE;     /* For wildcard IP address */
+    hints.ai_protocol = 0;           /* Any protocol */
+    hints.ai_canonname = nullptr;
+    hints.ai_addr = nullptr;
+    hints.ai_next = nullptr;
+    auto err = getaddrinfo(nullptr, std::to_string(SERVER_PORT).c_str(), &hints, &ret);
+    if (err != 0)
     {
-        fprintf(stderr, "Can't resolve Database domain: %s\n", DATABASE_DOMAIN);
-        exit(EXIT_FAILURE);
-    }
-    for (size_t i = 0; host->h_addr_list[i]; i++)
-        this->DB_IP_List.push_back(inet_ntoa(*(struct in_addr *)host->h_addr_list[i]));
-}
-
-Server::~Server() = default;
-
-void Server::Init()
-{
-    fprintf(stdout, "Init Server...\n");
-
-    if ((listener = socket(serverAddr.sin_family, SOCK_STREAM, 0)) < 0)
-    {
-        fprintf(stderr, "listener error\n");
-        exit(EXIT_FAILURE);
-    }
-    //fdAutoCloser(listener);
-
-    const int reuse = 1;
-    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0)
-    {
-        fprintf(stderr, "setsockopt reuse addr error\n");
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(err));
         exit(EXIT_FAILURE);
     }
 
-    if (bind(listener, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
+    const int reuseAddr = 1;
+    for (cur = ret; cur; cur = cur->ai_next)
     {
-        fprintf(stderr, "bind error: %s\n", strerror(errno));
+        if ((this->listener = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol)) < 0)
+            continue;
+
+        if (setsockopt(this->listener, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) < 0)
+        {
+            fprintf(stderr, "setsockopt reuse addr error\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if (bind(this->listener, cur->ai_addr, cur->ai_addrlen) == 0)
+            break;
+
+        close(this->listener);
+    }
+
+    if (!cur)
+    {
+        fprintf(stderr, "bind error\n");
+        exit(EXIT_FAILURE);
+    }
+    freeaddrinfo(ret);
+
+    if (listen(this->listener, BACK_LOG) < 0)
+    {
+        fprintf(stderr, "listen error: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
-    if (listen(listener, 5) < 0)
-    {
-        fprintf(stderr, "listen error");
-        exit(EXIT_FAILURE);
-    }
-
-    fprintf(stdout, "Start to listen local port: %u\n", SERVER_PORT);
+    fprintf(stdout, "Start to listen on local port: %u\n", SERVER_PORT);
 
     if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
     {
@@ -60,10 +59,56 @@ void Server::Init()
     }
     //fdAutoCloser(epfd);
     addfd(epfd, listener, true);
+}
 
+Server::~Server() = default;
+
+void Server::Init()
+{
     //连接到数据库
-    //TODO:MySQL服务器负载均衡
-    if (!this->db.ConnectMySQL(this->DB_IP_List.at(LoadBalancer(this->DB_IP_List.size())), DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
+    addrinfo *ret, hints, *cur;
+    bzero(&hints, sizeof(hints));
+    hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_ALL;
+    hints.ai_protocol = 0; /* Any protocol */
+
+    auto err = getaddrinfo(nullptr, std::to_string(SERVER_PORT).c_str(), &hints, &ret);
+    if (err != 0)
+    {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(err));
+        exit(EXIT_FAILURE);
+    }
+
+    char IP[128]{0};
+    for (cur = ret; cur; cur = cur->ai_next)
+    {
+        bzero(&IP, sizeof(IP));
+        if (cur->ai_family == AF_INET6)
+        {
+            auto sockAddr_IPv6 = reinterpret_cast<sockaddr_in6 *>(cur->ai_addr);
+            if (inet_ntop(cur->ai_family, &sockAddr_IPv6->sin6_addr, IP, sizeof(IP)))
+                break;
+            else
+                continue;
+        }
+        else
+        {
+            auto sockAddr_IPv4 = reinterpret_cast<sockaddr_in *>(cur->ai_addr);
+            if (inet_ntop(cur->ai_family, &sockAddr_IPv4->sin_addr, IP, sizeof(IP)))
+                break;
+            else
+                continue;
+        }
+    }
+    if (!cur)
+    {
+        fprintf(stderr, "inet_ntop error\n");
+        exit(EXIT_FAILURE);
+    }
+    freeaddrinfo(ret);
+
+    if (!this->db.ConnectMySQL(IP, DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
     {
         fprintf(stderr, "Can't Connect to Database.\n");
         exit(FAIL_CONNECT_DB);
@@ -146,14 +191,14 @@ void Server::Start()
                 //查数据库完善信息，并添加信息到系统文件描述表和映射表
                 this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
 
-                addfd(epfd, clientfd, true);
+                addfd(this->epfd, clientfd, true);
                 fprintf(stdout, "\033[31mClient connection from %s:%u, clientfd = %d\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), clientfd);
                 fprintf(stdout, "Add new clientfd = %d to epoll. Now there are %lu client(s) int the chat room\n", clientfd, client_list.size());
                 fprintf(stdout, "Welcome Message\n");
 
-                bzero(msg, BUF_SIZE);
-                sprintf(msg, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
-                if (send(clientfd, msg, strlen(msg), 0) < 0)
+                bzero(this->msg, BUF_SIZE);
+                snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
+                if (send(clientfd, this->msg, strlen(this->msg), 0) < 0)
                 {
                     fprintf(stderr, "send() welcome msg error\n");
                     Close();
@@ -177,7 +222,7 @@ void Server::Start()
 void Server::SendLoginStatus(int clientfd, const size_t authVerifyStatusCode)
 {
     bzero(this->msg, BUF_SIZE);
-    sprintf(this->msg, LOGIN_CODE, char(authVerifyStatusCode));
+    snprintf(this->msg, BUF_SIZE, LOGIN_CODE, char(authVerifyStatusCode));
     if (send(clientfd, this->msg, strlen(this->msg), 0) < 0)
     {
         fprintf(stderr, "send() auth info error\n");
@@ -207,12 +252,12 @@ ssize_t Server::SendBroadcastMsg(const int clientfd)
             send(clientfd, CAUTION, strlen(CAUTION), 0);
             return len;
         }
-        bzero(msg, BUF_SIZE);
-        sprintf(msg, SERVER_MSG, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str(), buf);
+        bzero(this->msg, BUF_SIZE);
+        snprintf(this->msg, BUF_SIZE, SERVER_MSG, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str(), buf);
         for (const auto &iter : client_list)
         {
             if (iter != clientfd)
-                if (send(iter, msg, strlen(msg), 0) < 0)
+                if (send(iter, this->msg, strlen(this->msg), 0) < 0)
                     return -1;
             //this->client_list.remove(clientfd);
         }
