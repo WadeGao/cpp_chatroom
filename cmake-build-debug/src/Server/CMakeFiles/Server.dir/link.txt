@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/Server.dir/Server.cpp.o CMakeFiles/Server.dir/ServerMain.cpp.o CMakeFiles/Server.dir/__/Common/Database.cpp.o  -o ../../../bin/Server -lmysqlclient 

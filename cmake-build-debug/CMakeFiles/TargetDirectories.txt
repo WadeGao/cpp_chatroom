@@ -1,8 +1,0 @@
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/src/Client/CMakeFiles/rebuild_cache.dir
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/src/Client/CMakeFiles/Client.dir
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/src/Client/CMakeFiles/edit_cache.dir
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/src/Server/CMakeFiles/rebuild_cache.dir
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/src/Server/CMakeFiles/Server.dir
-/home/wade/Desktop/cpp-imsoftware/cmake-build-debug/src/Server/CMakeFiles/edit_cache.dir
