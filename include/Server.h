@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-23 12:35:17
+ * @LastEditTime: 2021-02-23 20:00:17
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -15,13 +15,33 @@
 #include <utility>
 
 #define BACK_LOG 1024
+
+//状态码
+enum SERVER_CHECK_CODE
+{
+    CHECK_SUCCESS = 1,
+    SERVER_FAIL_CONNECT_DB,
+    CLIENTID_NOT_EXIST,
+    WRONG_CLIENT_PASSWORD,
+    DUPLICATED_LOGIN,
+    SERVER_GETADDRINFO_ERROR,
+    SERVER_SETSOCKOPT_ERROR,
+    BIND_ERROR,
+    LISTEN_ERROR,
+    SERVER_EPOLL_CREATE_ERROR,
+    SERVER_INET_NTOP_ERROR,
+    ACCEPT_ERROR,
+    SERVER_SEND_ERROR,
+    SENDBROADCASTMSG_ERROR,
+};
+
 class Server
 {
 private:
     char msg[BUF_SIZE]{0};
     ssize_t SendBroadcastMsg(int clientfd);
-    int listener;
-    int epfd;
+    int listener{0};
+    int epfd{0};
     std::list<int> client_list;
 
     Database db;

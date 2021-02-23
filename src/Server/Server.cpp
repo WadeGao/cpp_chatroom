@@ -1,7 +1,7 @@
 #include "Server.h"
 #include <iostream>
 
-Server::Server() : listener(0), epfd(0)
+Server::Server()
 {
     this->Conn2DB(DATABASE_DOMAIN, "3306", DATABASE_ADMIN, DATABASE_NAME);
 
@@ -18,7 +18,7 @@ Server::Server() : listener(0), epfd(0)
     if (err != 0)
     {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(err));
-        exit(EXIT_FAILURE);
+        exit(SERVER_GETADDRINFO_ERROR);
     }
 
     const int reuseAddr = 1;
@@ -30,7 +30,7 @@ Server::Server() : listener(0), epfd(0)
         if (setsockopt(this->listener, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) < 0)
         {
             fprintf(stderr, "setsockopt reuse addr error\n");
-            exit(EXIT_FAILURE);
+            exit(SERVER_SETSOCKOPT_ERROR);
         }
 
         if (bind(this->listener, cur->ai_addr, cur->ai_addrlen) == 0)
@@ -42,14 +42,14 @@ Server::Server() : listener(0), epfd(0)
     if (!cur)
     {
         fprintf(stderr, "bind error\n");
-        exit(EXIT_FAILURE);
+        exit(BIND_ERROR);
     }
     freeaddrinfo(ret);
 
     if (listen(this->listener, BACK_LOG) < 0)
     {
         fprintf(stderr, "listen error: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
+        exit(LISTEN_ERROR);
     }
 
     fprintf(stdout, "Start to listen on local port: %s\n", SERVER_PORT);
@@ -57,7 +57,7 @@ Server::Server() : listener(0), epfd(0)
     if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
     {
         //fprintf(stderr, "epoll_create() error\n");
-        exit(EXIT_FAILURE);
+        exit(SERVER_EPOLL_CREATE_ERROR);
     }
     //fdAutoCloser(epfd);
     addfd(epfd, listener, true);
@@ -76,7 +76,7 @@ void Server::Conn2DB(const char *db_domain, const char *port, const char *db_acc
     if (err != 0)
     {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(err));
-        exit(EXIT_FAILURE);
+        exit(SERVER_GETADDRINFO_ERROR);
     }
 
     char IP[128]{0};
@@ -103,14 +103,14 @@ void Server::Conn2DB(const char *db_domain, const char *port, const char *db_acc
     if (!cur)
     {
         fprintf(stderr, "inet_ntop error\n");
-        exit(EXIT_FAILURE);
+        exit(SERVER_INET_NTOP_ERROR);
     }
     freeaddrinfo(ret);
 
     if (!this->db.ConnectMySQL(IP, db_account, db_name, atoi(port)))
     {
         fprintf(stderr, "Can't Connect to Database.\n");
-        exit(FAIL_CONNECT_DB);
+        exit(SERVER_FAIL_CONNECT_DB);
     }
 }
 
@@ -143,7 +143,7 @@ void Server::Start()
                     {
                         fprintf(stderr, "\033[31maccept error\n\033[0m");
                         this->Close();
-                        exit(EXIT_FAILURE);
+                        exit(ACCEPT_ERROR);
                     }
                 }
                 //接收首次通信时由客户端告知的连接用户身份信息
@@ -198,7 +198,7 @@ void Server::Start()
                 {
                     fprintf(stderr, "send() welcome msg error\n");
                     Close();
-                    exit(EXIT_FAILURE);
+                    exit(SERVER_SEND_ERROR);
                 }
             }
             else
@@ -207,7 +207,7 @@ void Server::Start()
                 {
                     fprintf(stderr, "SendBroadcastMsg() error\n");
                     Close();
-                    exit(EXIT_FAILURE);
+                    exit(SENDBROADCASTMSG_ERROR);
                 }
             }
         }
@@ -223,7 +223,7 @@ void Server::SendLoginStatus(int clientfd, const size_t authVerifyStatusCode)
     {
         fprintf(stderr, "send() auth info error\n");
         Close();
-        exit(EXIT_FAILURE);
+        exit(SERVER_SEND_ERROR);
     }
 }
 

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-23 12:22:33
+ * @LastEditTime: 2021-02-23 17:03:31
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -26,24 +26,14 @@
 #include <unistd.h>
 #include <vector>
 
-//状态码
-enum CHECK_CODE
-{
-    CHECK_SUCCESS = 1,
-    FAIL_CONNECT_DB,
-    CLIENTID_NOT_EXIST,
-    WRONG_CLIENT_PASSWORD,
-    DUPLICATED_LOGIN
-};
-
 //转发服务器配置信息
-#define SERVER_DOMAIN "wadegao.tpddns.net"
+#define SERVER_DOMAIN "127.0.0.1"
 #define SERVER_PORT "8888"
 #define EPOLL_SIZE 5000
 #define BUF_SIZE 2048
 
 //MySQL服务器配置信息
-#define DATABASE_DOMAIN "wadegao.tpddns.net"
+#define DATABASE_DOMAIN "127.0.0.1"
 #define DATABASE_NAME "ChatRoom"
 #define DATABASE_ADMIN "root"
 #define DATABASE_PWD "140603"

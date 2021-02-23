@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-19 10:03:15
+ * @LastEditTime: 2021-02-23 20:02:28
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -11,21 +11,34 @@
 
 #include "Common.h"
 
+//状态码
+enum CLIENT_CHECK_CODE
+{
+    CLIENTID_NOT_EXIST = 1,
+    WRONG_CLIENT_PASSWORD,
+    DUPLICATED_LOGIN,
+    SERVER_CRASHED,
+    CLIENT_GETADDRINFO_ERROR,
+    CONNECT_ERROR,
+    CLIENT_PIPE_ERROR,
+    CLIENT_EPOLLCREATE_ERROR,
+    CLIENT_SEND_ERROR,
+    CLIENT_RECV_ERROR,
+    CLIENT_FORK_ERROR,
+    CLIENT_WRITE_ERROR,
+};
+
 class Client
 {
 private:
-    int sock;
-    pid_t pid;
-    int epfd;
+    int sock{0};
+    pid_t pid{0};
+    int epfd{0};
     int pipe_fd[2]{};
-    bool isClientWork;
+    bool isClientWork{true};
     char msg[BUF_SIZE]{'\0'};
-    struct sockaddr_in serverAddr;
-
     std::string ClientID;
     std::string ClientPwd;
-
-    std::vector<char *> ServerIP_List;
 
     void Connect();
 
@@ -40,8 +53,8 @@ private:
     //void handlerSIGCHLD(int signo);
 
 public:
-    Client(std::string id, std::string pwd);
-    ~Client();
+    Client(const std::string &id, const std::string &pwd);
+    ~Client() = default;
     void Start();
 };
 
