@@ -11,9 +11,9 @@ static void handlerSIGCHLD(int signo)
         fprintf(stdout, "child %d terminated\n", PID);
 }
 
-Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), ClientPwd(pwd)
+Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), ClientPwd(std::move(pwd))
 {
-    addrinfo hints, *ret, *cur;
+    addrinfo hints{}, *ret, *cur;
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM;
@@ -48,7 +48,7 @@ Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), Cl
         exit(CLIENT_PIPE_ERROR);
     }
 
-    if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
+    if ((epfd = epoll_create(2)) < 0)
     {
         fprintf(stderr, "epoll_create() error\n");
         exit(CLIENT_EPOLLCREATE_ERROR);
@@ -99,24 +99,21 @@ void Client::RecvLoginStatus()
 
     switch (this->LoginAuthInfoParser(this->msg))
     {
-    case CLIENTID_NOT_EXIST:
+    case CLIENT_ID_NOT_EXIST:
         fprintf(stderr, "Account not exists, please check your account\n");
         this->Close();
-        exit(CLIENTID_NOT_EXIST);
-        break;
+        exit(CLIENT_ID_NOT_EXIST);
     case WRONG_CLIENT_PASSWORD:
         fprintf(stderr, "Account's password error, please check your password\n");
         this->Close();
         exit(WRONG_CLIENT_PASSWORD);
-        break;
     case DUPLICATED_LOGIN:
         fprintf(stderr, "Account has been online!\n");
         this->Close();
         exit(DUPLICATED_LOGIN);
-        break;
     default:
         break;
-    };
+    }
 }
 
 void Client::Start()

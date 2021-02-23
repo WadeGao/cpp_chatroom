@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-23 20:02:28
+ * @LastEditTime: 2021-02-23 21:02:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -10,14 +10,12 @@
 #define __CLIENT_H__
 
 #include "Common.h"
+#define LOGOUT "LOGOUT"
 
 //状态码
 enum CLIENT_CHECK_CODE
 {
-    CLIENTID_NOT_EXIST = 1,
-    WRONG_CLIENT_PASSWORD,
-    DUPLICATED_LOGIN,
-    SERVER_CRASHED,
+    SERVER_CRASHED = 1,
     CLIENT_GETADDRINFO_ERROR,
     CONNECT_ERROR,
     CLIENT_PIPE_ERROR,
@@ -53,7 +51,7 @@ private:
     //void handlerSIGCHLD(int signo);
 
 public:
-    Client(const std::string &id, const std::string &pwd);
+    Client(std::string id, std::string pwd);
     ~Client() = default;
     void Start();
 };

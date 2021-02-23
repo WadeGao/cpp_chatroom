@@ -101,7 +101,6 @@ void Database::ReadMySQL2Screen(const std::string &query)
 
     MYSQL_RES *result = mysql_store_result(&mysql);
     auto field_count = mysql_num_fields(result);
-    MYSQL_FIELD *field = nullptr;
 
     for (decltype(field_count) i = 0; i < field_count; i++)
         fprintf(stdout, "\033[32m%s\033[0m\t", mysql_fetch_field_direct(result, i)->name);

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-23 17:03:31
+ * @LastEditTime: 2021-02-23 21:08:22
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -29,25 +29,21 @@
 //转发服务器配置信息
 #define SERVER_DOMAIN "127.0.0.1"
 #define SERVER_PORT "8888"
-#define EPOLL_SIZE 5000
+
 #define BUF_SIZE 2048
 
-//MySQL服务器配置信息
-#define DATABASE_DOMAIN "127.0.0.1"
-#define DATABASE_NAME "ChatRoom"
-#define DATABASE_ADMIN "root"
-#define DATABASE_PWD "140603"
-
-//格式化报文信息
-#define SERVER_WELCOME "\033[31mWelcome to join the chat room! You Nickname is %s\033[0m"
-#define SERVER_MSG "\033[32m%s >>> %s\033[0m\a"
-#define LOGOUT "LOGOUT"
-#define CAUTION "\033[31mYou're the only one in the chat room!\033[0m"
-#define LOGIN_CODE "Login Code:%c"
-
+enum COMMON_CHECK_CODE
+{
+    CLIENT_CHECK_SUCCESS = 1,
+    CLIENT_ID_NOT_EXIST,
+    WRONG_CLIENT_PASSWORD,
+    DUPLICATED_LOGIN,
+};
 static void addfd(int epollfd, int fd, bool enable_et)
 {
-    struct epoll_event ev;
+    struct epoll_event ev
+    {
+    };
     ev.data.fd = fd;
     ev.events = EPOLLIN;
     if (enable_et)

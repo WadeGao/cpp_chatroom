@@ -5,7 +5,7 @@ Server::Server()
 {
     this->Conn2DB(DATABASE_DOMAIN, "3306", DATABASE_ADMIN, DATABASE_NAME);
 
-    addrinfo *ret, *cur, hints;
+    addrinfo *ret, *cur, hints{};
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM; /* Stream socket */
@@ -54,18 +54,19 @@ Server::Server()
 
     fprintf(stdout, "Start to listen on local port: %s\n", SERVER_PORT);
 
-    if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
+    if ((this->epfd = epoll_create(EPOLL_SIZE)) < 0)
     {
         //fprintf(stderr, "epoll_create() error\n");
         exit(SERVER_EPOLL_CREATE_ERROR);
     }
     //fdAutoCloser(epfd);
-    addfd(epfd, listener, true);
+
+    addfd(this->epfd, this->listener, true);
 }
 
 void Server::Conn2DB(const char *db_domain, const char *port, const char *db_account, const char *db_name)
 {
-    addrinfo *ret, hints, *cur;
+    addrinfo *ret, *cur, hints{};
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM;
@@ -91,7 +92,7 @@ void Server::Conn2DB(const char *db_domain, const char *port, const char *db_acc
             else
                 continue;
         }
-        else
+        else if (cur->ai_family == AF_INET)
         {
             auto sockAddr_IPv4 = reinterpret_cast<sockaddr_in *>(cur->ai_addr);
             if (inet_ntop(cur->ai_family, &sockAddr_IPv4->sin_addr, IP, sizeof(IP)))
@@ -126,13 +127,14 @@ void Server::Start()
             break;
         }
         //fprintf(stdout, "epoll_events_count = %d\n", epoll_events_count);
-
         for (int i = 0; i < epoll_events_count; i++)
         {
             auto sockfd = events[i].data.fd;
             if (sockfd == listener)
             {
-                struct sockaddr_in client_address;
+                struct sockaddr_in client_address
+                {
+                };
                 socklen_t client_addrLength = sizeof(struct sockaddr_in);
                 auto clientfd = accept(listener, (struct sockaddr *)&client_address, &client_addrLength);
                 if (clientfd < 0)
@@ -153,7 +155,7 @@ void Server::Start()
                 if (!len)
                     continue;
 
-                auto vectorID_Pwd = this->ShakeHandMsgParser(ID_Pwd_buf);
+                auto vectorID_Pwd = Server::ShakeHandMsgParser(ID_Pwd_buf);
                 auto authVerifyStatusCode = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
 
                 //发送给客户端登录状态码
@@ -161,13 +163,13 @@ void Server::Start()
                 this->SendLoginStatus(clientfd, authVerifyStatusCode);
 
                 //打印错误记录
-                if (authVerifyStatusCode != CHECK_SUCCESS)
+                if (authVerifyStatusCode != CLIENT_CHECK_SUCCESS)
                 {
                     close(clientfd);
 
                     switch (authVerifyStatusCode)
                     {
-                    case CLIENTID_NOT_EXIST:
+                    case CLIENT_ID_NOT_EXIST:
                         fprintf(stderr, "\033[31mAccount Verification Failed! Account %s not exist!\n\033[0m", vectorID_Pwd.at(0).c_str());
                         break;
                     case WRONG_CLIENT_PASSWORD:
@@ -189,7 +191,7 @@ void Server::Start()
 
                 addfd(this->epfd, clientfd, true);
                 fprintf(stdout, "\033[31mClient connection from %s:%u, clientfd = %d\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), clientfd);
-                fprintf(stdout, "Add new clientfd = %d to epoll. Now there are %lu client(s) int the chat room\n", clientfd, client_list.size());
+                fprintf(stdout, "\033[32mAdd new clientfd = %d to epoll. Now there are %lu client(s) int the chat room\n\033[0m", clientfd, client_list.size());
                 //fprintf(stdout, "Welcome Message\n");
 
                 bzero(this->msg, BUF_SIZE);
@@ -229,7 +231,7 @@ void Server::SendLoginStatus(int clientfd, const size_t authVerifyStatusCode)
 
 ssize_t Server::SendBroadcastMsg(const int clientfd)
 {
-    char buf[BUF_SIZE] = {0}, msg[BUF_SIZE] = {0};
+    char buf[BUF_SIZE] = {0};
     //fprintf(stdout, "read from client %d\n", clientfd);
 
     auto len = recv(clientfd, buf, BUF_SIZE, 0);
@@ -310,7 +312,7 @@ size_t Server::AccountVerification(const std::string &Account, const std::string
 
     //账号不存在
     if (!CheckIfAccountExist())
-        return CLIENTID_NOT_EXIST;
+        return CLIENT_ID_NOT_EXIST;
 
     //密码错误
     if (!CheckPassword())
@@ -320,7 +322,7 @@ size_t Server::AccountVerification(const std::string &Account, const std::string
     if (this->IsDuplicatedLoggin(Account))
         return DUPLICATED_LOGIN;
 
-    return CHECK_SUCCESS;
+    return CLIENT_CHECK_SUCCESS;
 }
 
 std::string Server::GetNickName(const std::string &ClientID)
