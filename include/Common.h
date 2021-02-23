@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-01-31 20:20:25
+ * @LastEditTime: 2021-02-23 12:22:33
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -11,20 +11,20 @@
 
 #include <arpa/inet.h>
 #include <cerrno>
-#include <vector>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <fcntl.h>
 #include <iostream>
 #include <list>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <string>
 #include <sys/epoll.h>
-#include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 //状态码
 enum CHECK_CODE
@@ -38,7 +38,7 @@ enum CHECK_CODE
 
 //转发服务器配置信息
 #define SERVER_DOMAIN "wadegao.tpddns.net"
-#define SERVER_PORT 8888
+#define SERVER_PORT "8888"
 #define EPOLL_SIZE 5000
 #define BUF_SIZE 2048
 
@@ -46,7 +46,7 @@ enum CHECK_CODE
 #define DATABASE_DOMAIN "wadegao.tpddns.net"
 #define DATABASE_NAME "ChatRoom"
 #define DATABASE_ADMIN "root"
-#define DATABASE_PWD "zsy19990607"
+#define DATABASE_PWD "140603"
 
 //格式化报文信息
 #define SERVER_WELCOME "\033[31mWelcome to join the chat room! You Nickname is %s\033[0m"

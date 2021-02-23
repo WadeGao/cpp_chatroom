@@ -11,26 +11,17 @@ Database::~Database()
     //fprintf(stdout, "Database Closed\n");
 }
 
-bool Database::ConnectMySQL(const char *host, const char *user, const char *db, bool IF_PROVIDE_PWD, const char *provided_pwd)
+bool Database::ConnectMySQL(const char *host, const char *user, const char *db, unsigned int port)
 {
-    if (IF_PROVIDE_PWD)
-    {
-        if (!mysql_real_connect(&mysql, host, user, provided_pwd, db, 3306, nullptr, CLIENT_FOUND_ROWS))
-        {
-            //fprintf(stderr, "Connect Failed: %s\n\n", mysql_error(&mysql));
-            return false;
-        }
-        //fprintf(stdout, "Connect successfully\n");
-        return true;
-    }
-
-    std::string pwd;
-    char failedTimes = 0;
+    char pwd[32]{0};
+    uint8_t failedTimes = 0;
     while (true)
     {
-        fprintf(stdout, "Please input password: ");
-        std::cin >> pwd;
-        if (!mysql_real_connect(&mysql, host, user, pwd.c_str(), db, 3306, nullptr, CLIENT_FOUND_ROWS))
+        fprintf(stdout, "Please input Database's password: ");
+
+        std::cin.getline(pwd, sizeof(pwd));
+
+        if (!mysql_real_connect(&mysql, host, user, pwd, db, port, nullptr, CLIENT_FOUND_ROWS))
         {
             fprintf(stderr, "Connect Failed: %s\n\n", mysql_error(&mysql));
             if (++failedTimes >= 3)
@@ -41,10 +32,11 @@ bool Database::ConnectMySQL(const char *host, const char *user, const char *db, 
         }
         else
         {
-            //fprintf(stdout, "Connect successfully\n");
+            fprintf(stdout, "Connect successfully\n");
             break;
         }
     }
+
     return true;
 }
 

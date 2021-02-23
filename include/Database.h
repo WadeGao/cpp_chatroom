@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1970-01-01 08:00:00
- * @LastEditTime: 2020-12-22 21:09:22
+ * @LastEditTime: 2021-02-23 10:23:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /4Database/Database.h
@@ -24,7 +24,7 @@ public:
     //断开数据库连接
     ~Database();
     //连接到数据库
-    bool ConnectMySQL(const char *host, const char *user, const char *db, bool IF_PROVIDE_PWD = false, const char *provided_pwd = nullptr);
+    bool ConnectMySQL(const char *host, const char *user, const char *db, unsigned int port);
     //从数据库中创建表、更新表、 删除表
     bool CUD_MySQL(const std::string &query);
     //返回数据库中表的集合

@@ -3,6 +3,8 @@
 
 Server::Server() : listener(0), epfd(0)
 {
+    this->Conn2DB(DATABASE_DOMAIN, "3306", DATABASE_ADMIN, DATABASE_NAME);
+
     addrinfo *ret, *cur, hints;
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
@@ -12,7 +14,7 @@ Server::Server() : listener(0), epfd(0)
     hints.ai_canonname = nullptr;
     hints.ai_addr = nullptr;
     hints.ai_next = nullptr;
-    auto err = getaddrinfo(nullptr, std::to_string(SERVER_PORT).c_str(), &hints, &ret);
+    auto err = getaddrinfo(nullptr, SERVER_PORT, &hints, &ret);
     if (err != 0)
     {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(err));
@@ -50,22 +52,19 @@ Server::Server() : listener(0), epfd(0)
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stdout, "Start to listen on local port: %u\n", SERVER_PORT);
+    fprintf(stdout, "Start to listen on local port: %s\n", SERVER_PORT);
 
     if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
     {
-        fprintf(stderr, "epoll_create() error\n");
+        //fprintf(stderr, "epoll_create() error\n");
         exit(EXIT_FAILURE);
     }
     //fdAutoCloser(epfd);
     addfd(epfd, listener, true);
 }
 
-Server::~Server() = default;
-
-void Server::Init()
+void Server::Conn2DB(const char *db_domain, const char *port, const char *db_account, const char *db_name)
 {
-    //连接到数据库
     addrinfo *ret, hints, *cur;
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
@@ -73,7 +72,7 @@ void Server::Init()
     hints.ai_flags = AI_ALL;
     hints.ai_protocol = 0; /* Any protocol */
 
-    auto err = getaddrinfo(nullptr, std::to_string(SERVER_PORT).c_str(), &hints, &ret);
+    auto err = getaddrinfo(db_domain, port, &hints, &ret);
     if (err != 0)
     {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(err));
@@ -108,7 +107,7 @@ void Server::Init()
     }
     freeaddrinfo(ret);
 
-    if (!this->db.ConnectMySQL(IP, DATABASE_ADMIN, DATABASE_NAME, true, DATABASE_PWD))
+    if (!this->db.ConnectMySQL(IP, db_account, db_name, atoi(port)))
     {
         fprintf(stderr, "Can't Connect to Database.\n");
         exit(FAIL_CONNECT_DB);
@@ -117,9 +116,7 @@ void Server::Init()
 
 void Server::Start()
 {
-    //TODO: 搞文件传输
-    static struct epoll_event events[EPOLL_SIZE];
-    Init();
+    struct epoll_event events[EPOLL_SIZE];
     while (true)
     {
         auto epoll_events_count = epoll_wait(epfd, events, EPOLL_SIZE, -1);
@@ -128,11 +125,10 @@ void Server::Start()
             fprintf(stderr, "epoll fail\n");
             break;
         }
-        fprintf(stdout, "epoll_events_count = %d\n", epoll_events_count);
+        //fprintf(stdout, "epoll_events_count = %d\n", epoll_events_count);
 
         for (int i = 0; i < epoll_events_count; i++)
         {
-            //char msg[BUF_SIZE] = {0};
             auto sockfd = events[i].data.fd;
             if (sockfd == listener)
             {
@@ -194,7 +190,7 @@ void Server::Start()
                 addfd(this->epfd, clientfd, true);
                 fprintf(stdout, "\033[31mClient connection from %s:%u, clientfd = %d\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), clientfd);
                 fprintf(stdout, "Add new clientfd = %d to epoll. Now there are %lu client(s) int the chat room\n", clientfd, client_list.size());
-                fprintf(stdout, "Welcome Message\n");
+                //fprintf(stdout, "Welcome Message\n");
 
                 bzero(this->msg, BUF_SIZE);
                 snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
@@ -234,7 +230,7 @@ void Server::SendLoginStatus(int clientfd, const size_t authVerifyStatusCode)
 ssize_t Server::SendBroadcastMsg(const int clientfd)
 {
     char buf[BUF_SIZE] = {0}, msg[BUF_SIZE] = {0};
-    fprintf(stdout, "read from client %d\n", clientfd);
+    //fprintf(stdout, "read from client %d\n", clientfd);
 
     auto len = recv(clientfd, buf, BUF_SIZE, 0);
 
@@ -302,9 +298,6 @@ bool Server::IsDuplicatedLoggin(const std::string &ID)
 
 size_t Server::AccountVerification(const std::string &Account, const std::string &Pwd)
 {
-    //账号不存在
-    //账号密码错误
-    //重复登录
     auto CheckIfAccountExist = [&Account, this]() -> bool {
         const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + Account + "';";
         return (this->db.ReadMySQL(sql).size() == 1);

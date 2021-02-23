@@ -1,7 +1,7 @@
+#include "Client.h"
 #include <iostream>
 #include <sys/wait.h>
 #include <utility>
-#include "Client.h"
 
 static void handlerSIGCHLD(int signo)
 {
@@ -27,7 +27,7 @@ Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), Clien
     //TODO:转发服务器负载均衡
     //serverAddr.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr *)host->h_addr_list[0]));
     serverAddr.sin_addr.s_addr = inet_addr(this->ServerIP_List.at(LoadBalancer(this->ServerIP_List.size())));
-    serverAddr.sin_port = htons(SERVER_PORT);
+    serverAddr.sin_port = htons(atoi(SERVER_PORT));
 }
 
 Client::~Client() = default;

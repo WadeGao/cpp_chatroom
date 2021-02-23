@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-21 12:01:28
+ * @LastEditTime: 2021-02-23 12:35:17
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -45,8 +45,8 @@ private:
 
 public:
     Server();
-    ~Server();
-    void Init();
+    ~Server() = default;
+    void Conn2DB(const char *db_domain, const char *port, const char *db_account, const char *db_name);
     void Start();
     void Close() const;
 };
