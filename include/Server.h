@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-23 21:08:14
+ * @LastEditTime: 2021-02-28 17:21:12
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -34,6 +34,7 @@ enum SERVER_CHECK_CODE
 {
     SERVER_FAIL_CONNECT_DB = 1,
     SERVER_GETADDRINFO_ERROR,
+    UNSUPPORTED_PROTOCOL,
     SERVER_SETSOCKOPT_ERROR,
     BIND_ERROR,
     LISTEN_ERROR,
@@ -69,7 +70,6 @@ private:
     void RemoveMappingInfo(int clientfd);
 
     static std::vector<std::string> ShakeHandMsgParser(const std::string &msg_buf);
-
     void SendLoginStatus(int clientfd, const size_t authVerifyStatusCode);
 
 public:

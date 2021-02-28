@@ -55,11 +55,7 @@ Server::Server()
     fprintf(stdout, "Start to listen on local port: %s\n", SERVER_PORT);
 
     if ((this->epfd = epoll_create(EPOLL_SIZE)) < 0)
-    {
-        //fprintf(stderr, "epoll_create() error\n");
         exit(SERVER_EPOLL_CREATE_ERROR);
-    }
-    //fdAutoCloser(epfd);
 
     addfd(this->epfd, this->listener, true);
 }
@@ -100,6 +96,11 @@ void Server::Conn2DB(const char *db_domain, const char *port, const char *db_acc
             else
                 continue;
         }
+        else
+        {
+            fprintf(stderr, "protocol unsupported\n");
+            exit(UNSUPPORTED_PROTOCOL);
+        }
     }
     if (!cur)
     {
@@ -126,7 +127,7 @@ void Server::Start()
             fprintf(stderr, "epoll fail\n");
             break;
         }
-        //fprintf(stdout, "epoll_events_count = %d\n", epoll_events_count);
+
         for (int i = 0; i < epoll_events_count; i++)
         {
             auto sockfd = events[i].data.fd;
@@ -150,7 +151,6 @@ void Server::Start()
                 }
                 //接收首次通信时由客户端告知的连接用户身份信息
                 char ID_Pwd_buf[BUF_SIZE] = {0};
-                //TODO:这里，recv被阻塞，等待新连接用户的消息
                 auto len = recv(clientfd, ID_Pwd_buf, BUF_SIZE, 0);
                 if (!len)
                     continue;
@@ -159,7 +159,6 @@ void Server::Start()
                 auto authVerifyStatusCode = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
 
                 //发送给客户端登录状态码
-                //TODO:Here!
                 this->SendLoginStatus(clientfd, authVerifyStatusCode);
 
                 //打印错误记录
@@ -190,9 +189,7 @@ void Server::Start()
                 this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
 
                 addfd(this->epfd, clientfd, true);
-                fprintf(stdout, "\033[31mClient connection from %s:%u, clientfd = %d\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), clientfd);
-                fprintf(stdout, "\033[32mAdd new clientfd = %d to epoll. Now there are %lu client(s) int the chat room\n\033[0m", clientfd, client_list.size());
-                //fprintf(stdout, "Welcome Message\n");
+                fprintf(stdout, "\033[31mConnection from %s:%u, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), vectorID_Pwd.at(0).c_str(), clientfd, client_list.size());
 
                 bzero(this->msg, BUF_SIZE);
                 snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
@@ -232,16 +229,14 @@ void Server::SendLoginStatus(int clientfd, const size_t authVerifyStatusCode)
 ssize_t Server::SendBroadcastMsg(const int clientfd)
 {
     char buf[BUF_SIZE] = {0};
-    //fprintf(stdout, "read from client %d\n", clientfd);
-
     auto len = recv(clientfd, buf, BUF_SIZE, 0);
 
     if (!len)
     {
         close(clientfd);
+        auto ClosedAccount = this->Fd2_ID_Nickname[clientfd].first.c_str();
         this->RemoveMappingInfo(clientfd);
-        fprintf(stdout, "\033[31mClient %d closed.\n\033[0m", clientfd);
-        fprintf(stdout, "Now there are %lu client(s) in the chat room.\n", client_list.size());
+        fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", clientfd, ClosedAccount, client_list.size());
     }
     else
     {
@@ -257,7 +252,6 @@ ssize_t Server::SendBroadcastMsg(const int clientfd)
             if (iter != clientfd)
                 if (send(iter, this->msg, strlen(this->msg), 0) < 0)
                     return -1;
-            //this->client_list.remove(clientfd);
         }
     }
     return len;
@@ -334,9 +328,7 @@ std::string Server::GetNickName(const std::string &ClientID)
 
 std::vector<std::string> Server::ShakeHandMsgParser(const std::string &msg_buf)
 {
-    size_t pos = msg_buf.find(']', 1);
-    size_t idLen = atol(msg_buf.substr(1, pos - 1).c_str());
-    std::string ID = msg_buf.substr(pos + 1, idLen);
-    std::string Pwd = msg_buf.substr(pos + 1 + idLen, msg_buf.size());
+    size_t pos = msg_buf.find(']', 1), idLen = atol(msg_buf.substr(1, pos - 1).c_str());
+    std::string ID = msg_buf.substr(pos + 1, idLen), Pwd = msg_buf.substr(pos + 1 + idLen, msg_buf.size());
     return {ID, Pwd};
 }
