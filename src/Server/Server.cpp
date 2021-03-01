@@ -197,7 +197,6 @@ void Server::Start()
                     exit(SERVER_GETNAMEINFO_ERROR);
                 }
                 fprintf(stdout, "\033[31mConnection from %s:%s, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", Host, Serv, vectorID_Pwd.at(0).c_str(), clientfd, client_list.size());
-                //fprintf(stdout, "\033[31mConnection from %s:%u, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), vectorID_Pwd.at(0).c_str(), clientfd, client_list.size());
 
                 bzero(this->msg, BUF_SIZE);
                 snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
