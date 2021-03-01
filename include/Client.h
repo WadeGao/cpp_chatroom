@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-23 21:02:13
+ * @LastEditTime: 2021-03-01 10:16:38
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -51,7 +51,7 @@ private:
     //void handlerSIGCHLD(int signo);
 
 public:
-    Client(std::string id, std::string pwd);
+    Client(const std::string &id, const std::string &pwd);
     ~Client() = default;
     void Start();
 };

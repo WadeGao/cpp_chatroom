@@ -10,7 +10,7 @@ static void handlerSIGCHLD(int signo)
         fprintf(stdout, "child %d terminated\n", PID);
 }
 
-Client::Client(std::string id, std::string pwd) : ClientID(std::move(id)), ClientPwd(std::move(pwd))
+Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), ClientPwd(pwd)
 {
     addrinfo hints{}, *ret, *cur;
     bzero(&hints, sizeof(hints));
@@ -132,12 +132,12 @@ void Client::Start()
     {
         close(this->pipe_fd[0]);
         fprintf(stdout, "\033[31mPlease input 'LOGOUT' to exit the chat room\n\033[0m");
-        while (isClientWork)
+        while (this->isClientWork)
         {
             bzero(&this->msg, BUF_SIZE);
             fgets(this->msg, BUF_SIZE, stdin);
             if (!strncasecmp(this->msg, LOGOUT, strlen(LOGOUT)))
-                isClientWork = false;
+                this->isClientWork = false;
             else
             {
                 if (write(this->pipe_fd[1], this->msg, strlen(this->msg) - 1) < 0)

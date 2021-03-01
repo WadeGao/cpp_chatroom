@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-28 17:21:12
+ * @LastEditTime: 2021-03-01 10:30:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -39,6 +39,7 @@ enum SERVER_CHECK_CODE
     BIND_ERROR,
     LISTEN_ERROR,
     ACCEPT_ERROR,
+    SERVER_GETNAMEINFO_ERROR,
     SERVER_EPOLL_CREATE_ERROR,
     SERVER_INET_NTOP_ERROR,
     SERVER_SEND_ERROR,

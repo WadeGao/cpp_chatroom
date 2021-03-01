@@ -189,7 +189,15 @@ void Server::Start()
                 this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
 
                 addfd(this->epfd, clientfd, true);
-                fprintf(stdout, "\033[31mConnection from %s:%u, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), vectorID_Pwd.at(0).c_str(), clientfd, client_list.size());
+
+                char Host[128]{0}, Serv[6]{0};
+                if (getnameinfo(reinterpret_cast<sockaddr *>(&client_address), client_addrLength, Host, sizeof(Host), Serv, sizeof(Serv), NI_NUMERICHOST | NI_NUMERICSERV) != 0)
+                {
+                    fprintf(stderr, "getnameinfo error.\n");
+                    exit(SERVER_GETNAMEINFO_ERROR);
+                }
+                fprintf(stdout, "\033[31mConnection from %s:%s, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", Host, Serv, vectorID_Pwd.at(0).c_str(), clientfd, client_list.size());
+                //fprintf(stdout, "\033[31mConnection from %s:%u, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), vectorID_Pwd.at(0).c_str(), clientfd, client_list.size());
 
                 bzero(this->msg, BUF_SIZE);
                 snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
