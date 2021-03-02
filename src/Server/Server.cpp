@@ -196,7 +196,7 @@ void Server::Start()
                     fprintf(stderr, "getnameinfo error.\n");
                     exit(SERVER_GETNAMEINFO_ERROR);
                 }
-                fprintf(stdout, "\033[31mConnection from %s:%s, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", Host, Serv, vectorID_Pwd.at(0).c_str(), clientfd, client_list.size());
+                fprintf(stdout, "\033[31mConnection from %s:%s, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", Host, Serv, vectorID_Pwd.at(0).c_str(), clientfd, this->client_list.size());
 
                 bzero(this->msg, BUF_SIZE);
                 snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
@@ -243,23 +243,19 @@ ssize_t Server::SendBroadcastMsg(const int clientfd)
         close(clientfd);
         auto ClosedAccount = this->Fd2_ID_Nickname[clientfd].first.c_str();
         this->RemoveMappingInfo(clientfd);
-        fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", clientfd, ClosedAccount, client_list.size());
+        fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", clientfd, ClosedAccount, this->client_list.size());
     }
     else
     {
-        if (client_list.size() == 1)
-        {
-            send(clientfd, CAUTION, strlen(CAUTION), 0);
-            return len;
-        }
+        if (this->client_list.size() == 1)
+            return send(clientfd, CAUTION, strlen(CAUTION), 0);
+
         bzero(this->msg, BUF_SIZE);
         snprintf(this->msg, BUF_SIZE, SERVER_MSG, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str(), buf);
-        for (const auto &iter : client_list)
-        {
+        for (const auto &iter : this->client_list)
             if (iter != clientfd)
                 if (send(iter, this->msg, strlen(this->msg), 0) < 0)
                     return -1;
-        }
     }
     return len;
 }
