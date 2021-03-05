@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-05 10:44:35
+ * @LastEditTime: 2021-03-05 15:44:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -49,7 +49,7 @@ class Server
 {
 private:
     char msg[BUF_SIZE]{0};
-    ssize_t SendBroadcastMsg(int clientfd);
+
     int listener{0};
     int epfd{0};
     std::list<int> client_list;
@@ -58,18 +58,18 @@ private:
     std::unordered_map<int, std::pair<std::string, std::string>> Fd2_ID_Nickname;
     std::unordered_map<std::string, bool> If_Duplicated_Loggin;
 
-    //服务端账号身份校核
-    LoginStatusCodeType AccountVerification(const ClientIdentity &thisConnIdentity);
-    //服务端查询数据库获取账号昵称
-    std::string GetNickName(const std::string &ClientID);
-    //如果返回值为true，代表此账号已经登录，应该拒绝提供服务
-    bool IsDuplicatedLoggin(const std::string &ID);
-    //删除两个映射表的对应表项以及客户端文件描述符队列
-    void AddMappingInfo(int clientfd, const std::string &ID_buf);
-    //删除两个映射表的对应表项以及客户端文件描述符队列
-    void RemoveMappingInfo(int clientfd);
+    std::string GetNickName(const std::string &ClientID);         //服务端查询数据库获取账号昵称
+    void AddMappingInfo(int clientfd, const std::string &ID_buf); //删除两个映射表的对应表项以及客户端文件描述符队列
+    void RemoveMappingInfo(int clientfd);                         //删除两个映射表的对应表项以及客户端文件描述符队列
+    void MakeSomeoneOffline(int clientfd, bool isForced);
 
-    void SendLoginStatus(int clientfd, const LoginStatusCodeType &authVerifyStatusCode);
+    ssize_t SendLoginStatus(int clientfd, const LoginStatusCodeType &authVerifyStatusCode);
+    ssize_t SendBroadcastMsg(int clientfd);
+
+    bool CheckIfAccountExistInMySQL(const ClientIdentityType &thisConnIdentity);
+    bool CheckIsAccountPasswordMatch(const ClientIdentityType &thisConnIdentity);
+    bool CheckIsDuplicatedLoggin(const std::string &ID);
+    LoginStatusCodeType AccountVerification(const ClientIdentityType &thisConnIdentity);
 
 public:
     Server();
@@ -78,5 +78,12 @@ public:
     void Start();
     void Close() const;
 };
+#define MAX_CLIENT_IP_LEN 128
+#define MAX_CLIENT_PORT_LEN 6
+typedef struct
+{
+    char Host[MAX_CLIENT_IP_LEN]{0};
+    char Serv[MAX_CLIENT_PORT_LEN]{0};
+} ConnInfo;
 
 #endif

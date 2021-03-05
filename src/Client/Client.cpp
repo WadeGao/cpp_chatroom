@@ -72,7 +72,7 @@ void Client::Connect()
 //向服务器发送输入的ID和密码
 void Client::TellMyIdentity()
 {
-    if (send(this->sock, reinterpret_cast<const void *>(&this->myIdentity), sizeof(ClientIdentity), 0) < 0)
+    if (send(this->sock, reinterpret_cast<const void *>(&this->myIdentity), sizeof(ClientIdentityType), 0) < 0)
     {
         fprintf(stderr, "Send authentication error\n");
         this->Close();
