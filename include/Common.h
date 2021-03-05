@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-02-23 21:08:22
+ * @LastEditTime: 2021-03-05 14:03:09
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -32,13 +32,16 @@
 
 #define BUF_SIZE 2048
 
-enum COMMON_CHECK_CODE
-{
-    CLIENT_CHECK_SUCCESS = 1,
-    CLIENT_ID_NOT_EXIST,
-    WRONG_CLIENT_PASSWORD,
-    DUPLICATED_LOGIN,
-};
+#define MAX_ACCOUNT_LEN 32
+#define MAX_PASSWORD_LEN 32
+
+#define CLIENT_CHECK_SUCCESS 200
+#define CLIENT_ID_NOT_EXIST 501
+#define WRONG_CLIENT_PASSWORD 502
+#define DUPLICATED_LOGIN 503
+
+using LoginStatusCodeType = uint16_t;
+
 static void addfd(int epollfd, int fd, bool enable_et)
 {
     struct epoll_event ev
@@ -50,8 +53,13 @@ static void addfd(int epollfd, int fd, bool enable_et)
         ev.events = EPOLLIN | EPOLLET;
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFD, 0) | O_NONBLOCK);
-    //fprintf(stdout, "fd added to epoll.\n");
 }
+
+typedef struct
+{
+    char ID[MAX_ACCOUNT_LEN]{0};
+    char Password[MAX_PASSWORD_LEN]{0};
+} __attribute__((packed)) ClientIdentity;
 
 static void fdAutoCloser(int fd)
 {

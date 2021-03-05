@@ -10,8 +10,11 @@ static void handlerSIGCHLD(int signo)
         fprintf(stdout, "child %d terminated\n", PID);
 }
 
-Client::Client(const std::string &id, const std::string &pwd) : ClientID(id), ClientPwd(pwd)
+Client::Client(const char *id, const char *pwd)
 {
+    memcpy(this->myIdentity.ID, id, strlen(id));
+    memcpy(this->myIdentity.Password, pwd, strlen(pwd));
+
     addrinfo hints{}, *ret, *cur;
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
@@ -69,12 +72,9 @@ void Client::Connect()
 //向服务器发送输入的ID和密码
 void Client::TellMyIdentity()
 {
-    bzero(&this->msg, BUF_SIZE);
-    snprintf(this->msg, BUF_SIZE, "[%lu]%s%s", this->ClientID.size(), this->ClientID.c_str(), this->ClientPwd.c_str());
-
-    if (send(this->sock, this->msg, strlen(this->msg), 0) < 0)
+    if (send(this->sock, reinterpret_cast<const void *>(&this->myIdentity), sizeof(ClientIdentity), 0) < 0)
     {
-        fprintf(stderr, "send() auth info error\n");
+        fprintf(stderr, "Send authentication error\n");
         this->Close();
         exit(CLIENT_SEND_ERROR);
     }
@@ -86,7 +86,8 @@ void Client::RecvLoginStatus()
 
     auto old_fd_status = fcntl(this->sock, F_GETFD, 0);
     fcntl(this->sock, F_SETFL, fcntl(this->sock, F_GETFD, 0) & ~O_NONBLOCK);
-    auto len = recv(this->sock, this->msg, BUF_SIZE, 0);
+    LoginStatusCodeType status;
+    auto len = recv(this->sock, reinterpret_cast<void *>(&status), BUF_SIZE, 0);
     fcntl(this->sock, F_SETFL, old_fd_status);
 
     if (len < 0)
@@ -96,7 +97,7 @@ void Client::RecvLoginStatus()
         exit(CLIENT_RECV_ERROR);
     }
 
-    switch (this->LoginAuthInfoParser(this->msg))
+    switch (status)
     {
     case CLIENT_ID_NOT_EXIST:
         fprintf(stderr, "Account not exists, please check your account\n");
@@ -125,7 +126,6 @@ void Client::Start()
     if ((this->pid = fork()) < 0)
     {
         fprintf(stderr, "fork() error\n");
-        //close(sock);
         exit(CLIENT_FORK_ERROR);
     }
     else if (!this->pid)
@@ -134,7 +134,7 @@ void Client::Start()
         fprintf(stdout, "\033[31mPlease input 'LOGOUT' to exit the chat room\n\033[0m");
         while (this->isClientWork)
         {
-            bzero(&this->msg, BUF_SIZE);
+            bzero(this->msg, BUF_SIZE);
             fgets(this->msg, BUF_SIZE, stdin);
             if (!strncasecmp(this->msg, LOGOUT, strlen(LOGOUT)))
                 this->isClientWork = false;
@@ -173,14 +173,3 @@ void Client::Start()
 }
 
 void Client::Close() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
-
-size_t Client::LoginAuthInfoParser(const std::string &str)
-{
-    bool flag = ((str.size() == 12) && (str.substr(0, 10) == "Login Code"));
-    if (!flag)
-    {
-        fprintf(stderr, "Error package format\n");
-        this->Close();
-    }
-    return size_t(str.at(11));
-}

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-02 22:34:44
+ * @LastEditTime: 2021-03-05 10:44:35
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -27,7 +27,6 @@
 #define SERVER_WELCOME "\033[31mWelcome to join the chat room! You Nickname is %s\033[0m"
 #define SERVER_MSG "\033[32m%s >>> %s\033[0m\a"
 #define CAUTION "\033[31mYou're the only one in the chat room!\033[0m"
-#define LOGIN_CODE "Login Code:%c"
 
 //状态码
 enum SERVER_CHECK_CODE
@@ -60,7 +59,7 @@ private:
     std::unordered_map<std::string, bool> If_Duplicated_Loggin;
 
     //服务端账号身份校核
-    size_t AccountVerification(const std::string &ClientID, const std::string &ClientPwd);
+    LoginStatusCodeType AccountVerification(const ClientIdentity &thisConnIdentity);
     //服务端查询数据库获取账号昵称
     std::string GetNickName(const std::string &ClientID);
     //如果返回值为true，代表此账号已经登录，应该拒绝提供服务
@@ -70,8 +69,7 @@ private:
     //删除两个映射表的对应表项以及客户端文件描述符队列
     void RemoveMappingInfo(int clientfd);
 
-    static std::vector<std::string> ShakeHandMsgParser(const std::string &msg_buf);
-    void SendLoginStatus(int clientfd, const size_t authVerifyStatusCode);
+    void SendLoginStatus(int clientfd, const LoginStatusCodeType &authVerifyStatusCode);
 
 public:
     Server();

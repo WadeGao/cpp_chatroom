@@ -128,7 +128,7 @@ void Server::Start()
             break;
         }
 
-        for (int i = 0; i < epoll_events_count; i++)
+        for (decltype(epoll_events_count) i = 0; i < epoll_events_count; i++)
         {
             auto sockfd = events[i].data.fd;
             if (sockfd == listener)
@@ -150,14 +150,11 @@ void Server::Start()
                     }
                 }
                 //接收首次通信时由客户端告知的连接用户身份信息
-                char ID_Pwd_buf[BUF_SIZE] = {0};
-                auto len = recv(clientfd, ID_Pwd_buf, BUF_SIZE, 0);
+                ClientIdentity thisConnIdentity{};
+                auto len = recv(clientfd, reinterpret_cast<void *>(&thisConnIdentity), sizeof(ClientIdentity), 0);
                 if (!len)
                     continue;
-
-                auto vectorID_Pwd = Server::ShakeHandMsgParser(ID_Pwd_buf);
-                auto authVerifyStatusCode = this->AccountVerification(vectorID_Pwd.at(0), vectorID_Pwd.at(1));
-
+                auto authVerifyStatusCode = this->AccountVerification(thisConnIdentity);
                 //发送给客户端登录状态码
                 this->SendLoginStatus(clientfd, authVerifyStatusCode);
 
@@ -169,24 +166,23 @@ void Server::Start()
                     switch (authVerifyStatusCode)
                     {
                     case CLIENT_ID_NOT_EXIST:
-                        fprintf(stderr, "\033[31mAccount Verification Failed! Account %s not exist!\n\033[0m", vectorID_Pwd.at(0).c_str());
+                        fprintf(stderr, "\033[31mAccount Verification Failed! Account %s not exist!\n\033[0m", thisConnIdentity.ID);
                         break;
                     case WRONG_CLIENT_PASSWORD:
-                        fprintf(stderr, "\033[31mAccount Verification Failed! Account %s exists but wrong password!\n\033[0m", vectorID_Pwd.at(0).c_str());
+                        fprintf(stderr, "\033[31mAccount Verification Failed! Account %s exists but wrong password!\n\033[0m", thisConnIdentity.ID);
                         break;
                     case DUPLICATED_LOGIN:
-                        fprintf(stderr, "\033[31mDenied a duplicated connection of %s\n\033[0m", vectorID_Pwd.at(0).c_str());
+                        fprintf(stderr, "\033[31mDenied a duplicated connection of %s\n\033[0m", thisConnIdentity.ID);
                         break;
                     default:
                         break;
                     }
-
                     continue;
                 }
 
                 //至此身份核查已通过
                 //查数据库完善信息，并添加信息到系统文件描述表和映射表
-                this->AddMappingInfo(clientfd, vectorID_Pwd.at(0));
+                this->AddMappingInfo(clientfd, thisConnIdentity.ID);
 
                 addfd(this->epfd, clientfd, true);
 
@@ -196,13 +192,13 @@ void Server::Start()
                     fprintf(stderr, "getnameinfo error.\n");
                     exit(SERVER_GETNAMEINFO_ERROR);
                 }
-                fprintf(stdout, "\033[31mConnection from %s:%s, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", Host, Serv, vectorID_Pwd.at(0).c_str(), clientfd, this->client_list.size());
+                fprintf(stdout, "\033[31mConnection from %s:%s, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", Host, Serv, thisConnIdentity.ID, clientfd, this->client_list.size());
 
                 bzero(this->msg, BUF_SIZE);
                 snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
                 if (send(clientfd, this->msg, strlen(this->msg), 0) < 0)
                 {
-                    fprintf(stderr, "send() welcome msg error\n");
+                    fprintf(stderr, "Send welcome msg error\n");
                     Close();
                     exit(SERVER_SEND_ERROR);
                 }
@@ -221,10 +217,11 @@ void Server::Start()
     Close();
 }
 
-void Server::SendLoginStatus(int clientfd, const size_t authVerifyStatusCode)
+void Server::SendLoginStatus(int clientfd, const LoginStatusCodeType &authVerifyStatusCode)
 {
     bzero(this->msg, BUF_SIZE);
-    snprintf(this->msg, BUF_SIZE, LOGIN_CODE, char(authVerifyStatusCode));
+    memcpy(this->msg, (const void *)&authVerifyStatusCode, sizeof(authVerifyStatusCode));
+
     if (send(clientfd, this->msg, strlen(this->msg), 0) < 0)
     {
         fprintf(stderr, "send() auth info error\n");
@@ -271,9 +268,9 @@ void Server::AddMappingInfo(const int clientfd, const std::string &ID_buf)
     //根据账号ID查数据库得到账号昵称
     auto nickname = this->GetNickName(ID_buf);
     //写入文件描述符与账号信息的映射表
-    this->Fd2_ID_Nickname.insert(std::make_pair(clientfd, std::make_pair(ID_buf, nickname)));
+    this->Fd2_ID_Nickname.insert({clientfd, {ID_buf, nickname}});
     //写入在线账号ID表
-    this->If_Duplicated_Loggin.insert(std::make_pair(ID_buf, true));
+    this->If_Duplicated_Loggin.insert({ID_buf, true});
     //服务端用list保存用户连接
     this->client_list.push_back(clientfd);
 }
@@ -295,16 +292,16 @@ bool Server::IsDuplicatedLoggin(const std::string &ID)
     return !(iter == this->If_Duplicated_Loggin.end()) && iter->second;
 }
 
-size_t Server::AccountVerification(const std::string &Account, const std::string &Pwd)
+LoginStatusCodeType Server::AccountVerification(const ClientIdentity &thisConnIdentity)
 {
-    auto CheckIfAccountExist = [&Account, this]() -> bool {
-        const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + Account + "';";
+    auto CheckIfAccountExist = [&thisConnIdentity, this]() -> bool {
+        const std::string sql = "SELECT ClientID FROM ChatRoom WHERE ClientID = '" + std::string(thisConnIdentity.ID) + "';";
         return (this->db.ReadMySQL(sql).size() == 1);
     };
-    auto CheckPassword = [&Account, &Pwd, this]() -> bool {
-        const std::string sql = "SELECT ClientPassword FROM ChatRoom WHERE ClientID = '" + Account + "';";
+    auto CheckPassword = [&thisConnIdentity, this]() -> bool {
+        const std::string sql = "SELECT ClientPassword FROM ChatRoom WHERE ClientID = '" + std::string(thisConnIdentity.ID) + "';";
         auto ret = this->db.ReadMySQL(sql);
-        return (ret.size() == 1 && ret.at(0).at(0) == Pwd);
+        return (ret.size() == 1 && ret.at(0).at(0) == std::string(thisConnIdentity.Password));
     };
 
     //账号不存在
@@ -316,7 +313,7 @@ size_t Server::AccountVerification(const std::string &Account, const std::string
         return WRONG_CLIENT_PASSWORD;
 
     //账号重复登录
-    if (this->IsDuplicatedLoggin(Account))
+    if (this->IsDuplicatedLoggin(thisConnIdentity.ID))
         return DUPLICATED_LOGIN;
 
     return CLIENT_CHECK_SUCCESS;
@@ -327,11 +324,4 @@ std::string Server::GetNickName(const std::string &ClientID)
     auto sql = "SELECT ClientNickname FROM ChatRoom WHERE ClientID = '" + ClientID + "';";
     auto nickname = this->db.ReadMySQL(sql).at(0).at(0);
     return nickname;
-}
-
-std::vector<std::string> Server::ShakeHandMsgParser(const std::string &msg_buf)
-{
-    size_t pos = msg_buf.find(']', 1), idLen = atol(msg_buf.substr(1, pos - 1).c_str());
-    std::string ID = msg_buf.substr(pos + 1, idLen), Pwd = msg_buf.substr(pos + 1 + idLen, msg_buf.size());
-    return {ID, Pwd};
 }

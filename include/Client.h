@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-01 10:16:38
+ * @LastEditTime: 2021-03-05 10:27:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -35,23 +35,14 @@ private:
     int pipe_fd[2]{};
     bool isClientWork{true};
     char msg[BUF_SIZE]{'\0'};
-    std::string ClientID;
-    std::string ClientPwd;
-
+    ClientIdentity myIdentity{};
     void Connect();
-
     void TellMyIdentity(); //向服务器发送输入的ID和密码
-
-    size_t LoginAuthInfoParser(const std::string &str);
-
     void RecvLoginStatus();
-
     void Close();
 
-    //void handlerSIGCHLD(int signo);
-
 public:
-    Client(const std::string &id, const std::string &pwd);
+    Client(const char *id, const char *pwd);
     ~Client() = default;
     void Start();
 };
