@@ -1,5 +1,6 @@
 #include "Client.h"
 #include <iostream>
+#include <sys/prctl.h>
 #include <sys/wait.h>
 
 static void handlerSIGCHLD(int signo)
@@ -75,41 +76,38 @@ void Client::TellMyIdentity()
     if (send(this->sock, reinterpret_cast<const void *>(&this->myIdentity), sizeof(ClientIdentityType), 0) < 0)
     {
         fprintf(stderr, "Send authentication error\n");
-        this->Close();
+        //this->Close();
         exit(CLIENT_SEND_ERROR);
     }
 }
 
 void Client::RecvLoginStatus()
 {
-    bzero(&this->msg, BUF_SIZE);
-
     auto old_fd_status = fcntl(this->sock, F_GETFD, 0);
     fcntl(this->sock, F_SETFL, fcntl(this->sock, F_GETFD, 0) & ~O_NONBLOCK);
-    LoginStatusCodeType status;
-    auto len = recv(this->sock, reinterpret_cast<void *>(&status), BUF_SIZE, 0);
+    auto len = recv(this->sock, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType), 0);
     fcntl(this->sock, F_SETFL, old_fd_status);
 
     if (len < 0)
     {
         fprintf(stderr, "Error occurs, %s\n", strerror(errno));
-        this->Close();
+        //this->Close();
         exit(CLIENT_RECV_ERROR);
     }
 
-    switch (status)
+    switch (this->myMessage.msg_code.Code)
     {
     case CLIENT_ID_NOT_EXIST:
         fprintf(stderr, "Account not exists, please check your account\n");
-        this->Close();
+        //this->Close();
         exit(CLIENT_ID_NOT_EXIST);
     case WRONG_CLIENT_PASSWORD:
         fprintf(stderr, "Account's password error, please check your password\n");
-        this->Close();
+        //this->Close();
         exit(WRONG_CLIENT_PASSWORD);
     case DUPLICATED_LOGIN:
         fprintf(stderr, "Account has been online!\n");
-        this->Close();
+        //this->Close();
         exit(DUPLICATED_LOGIN);
     default:
         break;
@@ -118,6 +116,14 @@ void Client::RecvLoginStatus()
 
 void Client::Start()
 {
+    fprintf(stdout, " ______________________________________________________________\n");
+    fprintf(stdout, "|_______________________Message Type Code______________________|\n");
+    fprintf(stdout, "|                                                              |\n");
+    fprintf(stdout, "| Group Message -------------------------------------------> 1 |\n");
+    fprintf(stdout, "| Private Message -----------------------------------------> 2 |\n");
+    fprintf(stdout, "| Get Online List -----------------------------------------> 3 |\n");
+    fprintf(stdout, "| Logout the chatroom -------------------------------------> 4 |\n");
+    fprintf(stdout, "|______________________________________________________________|\n");
     static struct epoll_event events[2];
     this->Connect();
     signal(SIGCHLD, handlerSIGCHLD);
@@ -130,19 +136,50 @@ void Client::Start()
     }
     else if (!this->pid)
     {
+        //TODO:https://zhuanlan.zhihu.com/p/58708945 父进程死亡子进程同时死亡
+        prctl(PR_SET_PDEATHSIG, SIGKILL);
+
         close(this->pipe_fd[0]);
-        fprintf(stdout, "\033[31mPlease input 'LOGOUT' to exit the chat room\n\033[0m");
+        //fprintf(stdout, "\033[31mPlease input 'LOGOUT' to exit the chat room\n\033[0m");
         while (this->isClientWork)
         {
-            bzero(this->msg, BUF_SIZE);
-            fgets(this->msg, BUF_SIZE, stdin);
-            if (!strncasecmp(this->msg, LOGOUT, strlen(LOGOUT)))
-                this->isClientWork = false;
-            else
+        MsgSelectPoint:
+            bzero(&this->myMessage, sizeof(MessageType));
+            fprintf(stdout, "Message Type Code: \n");
+            int selectCode;
+            std::cin >> selectCode;
+            if (selectCode > 4 || !selectCode)
+                goto MsgSelectPoint;
+
+            switch (selectCode)
             {
-                if (write(this->pipe_fd[1], this->msg, strlen(this->msg) - 1) < 0)
-                    exit(CLIENT_WRITE_ERROR);
+            case 4: //Logout
+                this->myMessage.OperCode = REQUEST_NORMAL_OFFLINE;
+                break;
+            case 3: //Get Online List
+                //TODO:完成客户端请求在线列表
+                this->myMessage.OperCode = REQUEST_ONLINE_LIST;
+                break;
+            case 2: //Private Message
+                this->myMessage.OperCode = PRIVATE_MSG;
+                fprintf(stdout, "Send to account: ");
+                std::cin.getline(this->myMessage.msg_code.Whom, MAX_ACCOUNT_LEN);
+                //fgets(this->myMessage.msg_code.Whom, MAX_ACCOUNT_LEN, stdin);
+                fprintf(stdout, "Msg sent to %s: ", this->myMessage.msg_code.Whom);
+                std::cin.getline(this->myMessage.msg, BUF_SIZE);
+                //fgets(this->myMessage.msg, BUF_SIZE, stdin);
+                break;
+            case 1: //Group Message
+                this->myMessage.OperCode = GROUP_MSG;
+                std::cin.getline(this->myMessage.msg, BUF_SIZE);
+                //fgets(this->myMessage.msg, BUF_SIZE, stdin);
+                break;
+            default:
+                break;
             }
+
+            if (write(this->pipe_fd[1], reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType)) < 0)
+                exit(CLIENT_WRITE_ERROR);
         }
     }
     else
@@ -153,23 +190,52 @@ void Client::Start()
             auto epoll_event_count = epoll_wait(this->epfd, events, 2, -1);
             for (int i = 0; i < epoll_event_count; i++)
             {
-                bzero(&this->msg, BUF_SIZE);
+                bzero(&this->myMessage, BUF_SIZE);
                 if (events[i].data.fd == this->sock) //服务端发来消息
                 {
-                    if (!recv(this->sock, this->msg, BUF_SIZE, 0))
+                    if (!recv(this->sock, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType), 0))
                     {
-                        fprintf(stderr, "Server closed.\n");
                         this->isClientWork = false;
+                        fprintf(stderr, "Server closed.\n");
                     }
                     else
-                        fprintf(stdout, "%s\n", this->msg);
+                    {
+                        switch (this->myMessage.OperCode)
+                        {
+                        case WELCOME_WITH_IDENTITY_MSG:
+                            fprintf(stdout, "%s\n", this->myMessage.msg);
+                            break;
+                        case GROUP_MSG:
+                            fprintf(stdout, "\033[32m%s >>> %s\033[0m\n", myMessage.msg_code.Whom, myMessage.msg);
+                            break;
+                        case PRIVATE_MSG:
+                            fprintf(stdout, "\033[32m%s(private) >>> %s\033[0m\n", myMessage.msg_code.Whom, myMessage.msg);
+                            break;
+                        case REPLY_ONLINE_LIST:
+                            //TODO:完善在线列表回复
+                            fprintf(stdout, "\033[32mAccounts Online num: %d\nAccounts Online List:%s\n\033[0m\n", myMessage.msg_code.online_num, myMessage.msg);
+                            break;
+                        case ACCEPT_NORMAL_OFFLINE:
+                            fprintf(stdout, "Prepared to be offline.\n");
+                            exit(EXIT_SUCCESS);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
                 }
                 else //子进程写入事件发生，父进程处理并发送服务端
-                    !read(events[i].data.fd, this->msg, BUF_SIZE) ? this->isClientWork = false : send(this->sock, this->msg, strlen(this->msg), 0);
+                {
+                    if (read(events[i].data.fd, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType)) == 0) //子进程死了
+                        this->isClientWork = false;
+                    else
+                        send(this->sock, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType), 0);
+                }
             }
         }
     }
-    this->Close();
+    //this->Close();
 }
 
-void Client::Close() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
+//void Client::Close() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
+Client::~Client() { close(this->pipe_fd[!this->pid ? 1 : 0]); }

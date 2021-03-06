@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-20 22:03:34
- * @LastEditTime: 2020-12-23 20:58:32
+ * @LastEditTime: 2021-03-05 23:11:38
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /IM_Software/ClientMain.cpp
@@ -16,10 +16,7 @@ int main(int argc, char *argv[])
         fprintf(stdout, "Usage: %s [ID] [Password].\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-
     Client client(argv[1], argv[2]);
-
     client.Start();
-
     return 0;
 }

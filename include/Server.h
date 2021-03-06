@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-05 15:44:55
+ * @LastEditTime: 2021-03-06 10:05:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -25,7 +25,7 @@
 
 //格式化报文信息
 #define SERVER_WELCOME "\033[31mWelcome to join the chat room! You Nickname is %s\033[0m"
-#define SERVER_MSG "\033[32m%s >>> %s\033[0m\a"
+#define SERVER_MSG "\033[32m%s >>> %s\033[0m\n"
 #define CAUTION "\033[31mYou're the only one in the chat room!\033[0m"
 
 //状态码
@@ -43,6 +43,10 @@ enum SERVER_CHECK_CODE
     SERVER_INET_NTOP_ERROR,
     SERVER_SEND_ERROR,
     SENDBROADCASTMSG_ERROR,
+    SENDLOGINSTATUS_ERROR,
+    SENDPRIVATEMSG_ERROR,
+    SENDONLINELIST_ERROR,
+    SENDACCEPTNORMALOFFLINE,
 };
 
 class Server
@@ -57,14 +61,19 @@ private:
     Database db;
     std::unordered_map<int, std::pair<std::string, std::string>> Fd2_ID_Nickname;
     std::unordered_map<std::string, bool> If_Duplicated_Loggin;
+    std::unordered_map<std::string, int> ID_fd;
 
     std::string GetNickName(const std::string &ClientID);         //服务端查询数据库获取账号昵称
     void AddMappingInfo(int clientfd, const std::string &ID_buf); //删除两个映射表的对应表项以及客户端文件描述符队列
     void RemoveMappingInfo(int clientfd);                         //删除两个映射表的对应表项以及客户端文件描述符队列
     void MakeSomeoneOffline(int clientfd, bool isForced);
 
-    ssize_t SendLoginStatus(int clientfd, const LoginStatusCodeType &authVerifyStatusCode);
-    ssize_t SendBroadcastMsg(int clientfd);
+    ssize_t SendLoginStatus(int clientfd, const LoginStatusCodeType authVerifyStatusCode);
+    ssize_t SendWelcomeMsg(int clientfd);
+    ssize_t SendBroadcastMsg(const int clientfd, const char *MessageToSend);
+    ssize_t SendPrivateMsg(const int fd_from, const int fd_to, const char *MessageToSend);
+    ssize_t SendOnlineList(const int clientfd);
+    ssize_t SendAcceptNormalOffline(const int clientfd);
 
     bool CheckIfAccountExistInMySQL(const ClientIdentityType &thisConnIdentity);
     bool CheckIsAccountPasswordMatch(const ClientIdentityType &thisConnIdentity);

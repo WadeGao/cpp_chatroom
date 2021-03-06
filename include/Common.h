@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-05 16:12:08
+ * @LastEditTime: 2021-03-06 10:24:18
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -30,7 +30,8 @@
 #define SERVER_DOMAIN "127.0.0.1"
 #define SERVER_PORT "8888"
 
-#define BUF_SIZE 2048
+//#define BUF_SIZE 2048
+const size_t BUF_SIZE = 2048;
 
 //身份格式限制
 #define MAX_ACCOUNT_LEN 32
@@ -43,12 +44,15 @@
 #define DUPLICATED_LOGIN 503
 
 //消息操作码
-#define IDENTITY_MSG 600
-#define PRIVATE_MSG 601
+#define LOGIN_CODE_MSG 600
+#define WELCOME_WITH_IDENTITY_MSG 601
+#define PRIVATE_MSG 602
 #define GROUP_MSG 610
 #define REQUEST_ONLINE_LIST 700
-#define NORMAL_OFFLINE 801
-#define FORCE_OFFLINE 802
+#define REPLY_ONLINE_LIST 705
+#define REQUEST_NORMAL_OFFLINE 801
+#define ACCEPT_NORMAL_OFFLINE 805
+#define FORCE_OFFLINE 900
 
 using LoginStatusCodeType = uint16_t;
 
@@ -61,6 +65,13 @@ typedef struct
 typedef struct
 {
     uint32_t OperCode;
+    union msg_code
+    {
+        char Whom[MAX_ACCOUNT_LEN]{0};
+        LoginStatusCodeType Code;
+        size_t online_num;
+    } msg_code;
+
     char msg[BUF_SIZE]{0};
 } __attribute__((packed)) MessageType;
 

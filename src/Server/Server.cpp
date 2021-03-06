@@ -1,5 +1,6 @@
 #include "Server.h"
 #include <iostream>
+#include <sstream>
 
 Server::Server()
 {
@@ -191,29 +192,55 @@ void Server::Start()
                     fprintf(stderr, "\033[31mSend login code error! Ignore connection from %s:%s\n\033[0m", myConnInfo.Host, myConnInfo.Serv);
                     continue;
                 }
-                //至此身份核查已通过
-                //查数据库完善信息，并添加信息到系统文件描述表和映射表
+                //至此身份核查已通过,查数据库完善信息，并添加信息到系统文件描述表和映射表
                 this->AddMappingInfo(clientfd, thisConnIdentity.ID);
 
                 addfd(this->epfd, clientfd, true);
 
                 fprintf(stdout, "\033[31mConnection from %s:%s, Account is %s, clientfd = %d, Now %lu client(s) online\n\033[0m", myConnInfo.Host, myConnInfo.Serv, thisConnIdentity.ID, clientfd, this->client_list.size());
 
-                bzero(this->msg, BUF_SIZE);
-                snprintf(this->msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
-                if (send(clientfd, this->msg, strlen(this->msg), 0) < 0)
+                if (this->SendWelcomeMsg(clientfd) < 0)
                 {
-                    fprintf(stderr, "Send welcome msg to %s:%s error\n", myConnInfo.Host, myConnInfo.Serv);
+                    fprintf(stderr, "Send welcome message to %s:%s error\n", myConnInfo.Host, myConnInfo.Serv);
                     this->MakeSomeoneOffline(clientfd, false);
                 }
             }
             else
             {
-                if (SendBroadcastMsg(sockfd) < 0)
+                MessageType generalizedMessageToRecv;
+                bzero(&generalizedMessageToRecv, sizeof(MessageType));
+
+                auto len = recv(sockfd, reinterpret_cast<void *>(&generalizedMessageToRecv), sizeof(MessageType), 0);
+                if (!len)
                 {
-                    fprintf(stderr, "SendBroadcastMsg() error\n");
-                    Close();
-                    exit(SENDBROADCASTMSG_ERROR);
+                    auto ClosedAccount = this->Fd2_ID_Nickname[sockfd].first.c_str();
+                    this->MakeSomeoneOffline(sockfd, false);
+                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", sockfd, ClosedAccount, this->client_list.size());
+                    continue;
+                }
+
+                switch (generalizedMessageToRecv.OperCode)
+                {
+                case GROUP_MSG:
+                    if (this->SendBroadcastMsg(sockfd, generalizedMessageToRecv.msg) < 0)
+                        continue;
+                    break;
+                case PRIVATE_MSG:
+                    if (this->SendPrivateMsg(sockfd, this->ID_fd[generalizedMessageToRecv.msg_code.Whom], generalizedMessageToRecv.msg) < 0)
+                        continue;
+                    break;
+                case REQUEST_ONLINE_LIST:
+                    if (this->SendOnlineList(sockfd) < 0)
+                        continue;
+                    break;
+                case REQUEST_NORMAL_OFFLINE:
+                    if (this->SendAcceptNormalOffline(sockfd) < 0)
+                        continue;
+                    this->MakeSomeoneOffline(sockfd, false);
+                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", sockfd, this->Fd2_ID_Nickname[sockfd].first.c_str(), this->client_list.size());
+                    break;
+                default:
+                    break;
                 }
             }
         }
@@ -233,6 +260,7 @@ void Server::AddMappingInfo(const int clientfd, const std::string &ID_buf)
     auto nickname = this->GetNickName(ID_buf);
     //写入文件描述符与账号信息的映射表
     this->Fd2_ID_Nickname.insert({clientfd, {ID_buf, nickname}});
+    this->ID_fd.insert({ID_buf, clientfd});
     //写入在线账号ID表
     this->If_Duplicated_Loggin.insert({ID_buf, true});
     //服务端用list保存用户连接
@@ -244,6 +272,7 @@ void Server::RemoveMappingInfo(const int clientfd)
     auto closedAccount = this->Fd2_ID_Nickname.find(clientfd)->second.first;
     //删除文件描述符->账号信息映射表
     this->Fd2_ID_Nickname.erase(this->Fd2_ID_Nickname.find(clientfd));
+    this->ID_fd.erase(this->ID_fd.find(closedAccount));
     //删除在线账号列表表项
     this->If_Duplicated_Loggin.erase(this->If_Duplicated_Loggin.find(closedAccount));
     //将该账号对应的文件描述符从在线文件描述符集中删除
@@ -269,36 +298,76 @@ void Server::MakeSomeoneOffline(int clientfd, bool isForced)
     }
 }
 
-ssize_t Server::SendLoginStatus(int clientfd, const LoginStatusCodeType &authVerifyStatusCode)
+ssize_t Server::SendLoginStatus(int clientfd, const LoginStatusCodeType authVerifyStatusCode)
 {
-    bzero(this->msg, BUF_SIZE);
-    memcpy(this->msg, (const void *)&authVerifyStatusCode, sizeof(authVerifyStatusCode));
-    return send(clientfd, this->msg, strlen(this->msg), 0);
+    MessageType loginMessage;
+
+    bzero(&loginMessage, sizeof(MessageType));
+    loginMessage.OperCode = LOGIN_CODE_MSG;
+    memcpy(&loginMessage.msg_code.Code, &authVerifyStatusCode, sizeof(authVerifyStatusCode));
+
+    return send(clientfd, reinterpret_cast<const void *>(&loginMessage), sizeof(MessageType), 0);
 }
 
-ssize_t Server::SendBroadcastMsg(const int clientfd)
+ssize_t Server::SendWelcomeMsg(int clientfd)
 {
-    char buf[BUF_SIZE] = {0};
-    auto len = recv(clientfd, buf, BUF_SIZE, 0);
+    MessageType welcomeMessageToSend;
+    bzero(&welcomeMessageToSend, sizeof(MessageType));
+    welcomeMessageToSend.OperCode = WELCOME_WITH_IDENTITY_MSG;
+    snprintf(welcomeMessageToSend.msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
+    return send(clientfd, reinterpret_cast<void *>(&welcomeMessageToSend), sizeof(MessageType), 0);
+}
 
-    if (!len) //下线了
-    {
-        auto ClosedAccount = this->Fd2_ID_Nickname[clientfd].first.c_str();
-        this->MakeSomeoneOffline(clientfd, false);
-        fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", clientfd, ClosedAccount, this->client_list.size());
-    }
-    else if (len > 0)
-    {
-        if (this->client_list.size() == 1)
-            return send(clientfd, CAUTION, strlen(CAUTION), 0);
-        bzero(this->msg, BUF_SIZE);
-        snprintf(this->msg, BUF_SIZE, SERVER_MSG, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str(), buf);
-        for (const auto &iter : this->client_list)
-            if (iter != clientfd)
-                if (send(iter, this->msg, strlen(this->msg), 0) < 0)
-                    return -1;
-    }
-    return len;
+ssize_t Server::SendBroadcastMsg(const int clientfd, const char *MessageToSend)
+{
+    MessageType broadcastMessageToSend;
+    bzero(&broadcastMessageToSend, sizeof(MessageType));
+
+    broadcastMessageToSend.OperCode = GROUP_MSG;
+    memcpy(broadcastMessageToSend.msg, MessageToSend, BUF_SIZE);
+    snprintf(broadcastMessageToSend.msg_code.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[clientfd].second.c_str());
+
+    for (const auto &iter : this->client_list)
+        if (iter != clientfd)
+            if (send(iter, reinterpret_cast<const void *>(&broadcastMessageToSend), sizeof(MessageType), 0) < 0)
+                return -1;
+
+    return 0;
+}
+
+ssize_t Server::SendPrivateMsg(const int fd_from, const int fd_to, const char *MessageToSend)
+{
+    MessageType privateMessageToSend;
+    bzero(&privateMessageToSend, sizeof(MessageType));
+    privateMessageToSend.OperCode = PRIVATE_MSG;
+    memcpy(privateMessageToSend.msg, MessageToSend, BUF_SIZE);
+    snprintf(privateMessageToSend.msg_code.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[fd_from].first.c_str());
+    return send(fd_to, reinterpret_cast<const void *>(&privateMessageToSend), sizeof(MessageType), 0);
+}
+
+ssize_t Server::SendOnlineList(const int clientfd)
+{
+    //TODO:完成获取在线列表的实现
+    MessageType OnlineListMessageToSend;
+    bzero(&OnlineListMessageToSend, sizeof(MessageType));
+    OnlineListMessageToSend.OperCode = REPLY_ONLINE_LIST;
+    OnlineListMessageToSend.msg_code.online_num = this->client_list.size();
+
+    std::stringstream AccountsSplitByComma;
+    for (const auto &iter : this->ID_fd)
+        AccountsSplitByComma << iter.first << ",";
+
+    auto accountPtr = AccountsSplitByComma.str().c_str();
+    memcpy(OnlineListMessageToSend.msg, accountPtr, std::min(size_t(BUF_SIZE), strlen(accountPtr) - 1));
+    return send(clientfd, reinterpret_cast<const void *>(&OnlineListMessageToSend), sizeof(MessageType), 0);
+}
+
+ssize_t Server::SendAcceptNormalOffline(const int clientfd)
+{
+    MessageType acceptNormalOfflineMessageToSend;
+    bzero(&acceptNormalOfflineMessageToSend, sizeof(MessageType));
+    acceptNormalOfflineMessageToSend.OperCode = ACCEPT_NORMAL_OFFLINE;
+    return send(clientfd, reinterpret_cast<const void *>(&acceptNormalOfflineMessageToSend), sizeof(MessageType), 0);
 }
 
 bool Server::CheckIsDuplicatedLoggin(const std::string &ID)
