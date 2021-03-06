@@ -1,6 +1,5 @@
 #include "Server.h"
 #include <iostream>
-#include <sstream>
 
 Server::Server()
 {
@@ -226,8 +225,10 @@ void Server::Start()
                         continue;
                     break;
                 case PRIVATE_MSG:
-                    if (this->SendPrivateMsg(sockfd, this->ID_fd[generalizedMessageToRecv.msg_code.Whom], generalizedMessageToRecv.msg) < 0)
-                        continue;
+                    //auto iter = this->ID_fd.find(generalizedMessageToRecv.msg_code.Whom);
+                    if (this->ID_fd.find(generalizedMessageToRecv.msg_code.Whom) != this->ID_fd.end())
+                        if (this->SendPrivateMsg(sockfd, this->ID_fd[generalizedMessageToRecv.msg_code.Whom], generalizedMessageToRecv.msg) < 0)
+                            continue;
                     break;
                 case REQUEST_ONLINE_LIST:
                     if (this->SendOnlineList(sockfd) < 0)
@@ -236,8 +237,8 @@ void Server::Start()
                 case REQUEST_NORMAL_OFFLINE:
                     if (this->SendAcceptNormalOffline(sockfd) < 0)
                         continue;
+                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", sockfd, this->Fd2_ID_Nickname[sockfd].first.c_str(), this->client_list.size() - 1);
                     this->MakeSomeoneOffline(sockfd, false);
-                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", sockfd, this->Fd2_ID_Nickname[sockfd].first.c_str(), this->client_list.size());
                     break;
                 default:
                     break;
@@ -353,11 +354,14 @@ ssize_t Server::SendOnlineList(const int clientfd)
     OnlineListMessageToSend.OperCode = REPLY_ONLINE_LIST;
     OnlineListMessageToSend.msg_code.online_num = this->client_list.size();
 
-    std::stringstream AccountsSplitByComma;
+    std::string AccountsSplitByComma;
     for (const auto &iter : this->ID_fd)
-        AccountsSplitByComma << iter.first << ",";
+    {
+        AccountsSplitByComma += iter.first;
+        AccountsSplitByComma += std::string(",");
+    }
 
-    auto accountPtr = AccountsSplitByComma.str().c_str();
+    auto accountPtr = AccountsSplitByComma.c_str();
     memcpy(OnlineListMessageToSend.msg, accountPtr, std::min(BUF_SIZE, strlen(accountPtr) - 1));
     return send(clientfd, reinterpret_cast<const void *>(&OnlineListMessageToSend), sizeof(MessageType), 0);
 }

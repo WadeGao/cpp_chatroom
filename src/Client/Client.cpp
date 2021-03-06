@@ -217,7 +217,7 @@ void Client::Start()
                         case REPLY_ONLINE_LIST:
                             //TODO:完善在线列表回复
                             fprintf(stdout, "\033[32mAccounts Online num: %lu\033[0m\n", this->myMessage.msg_code.online_num);
-                            fprintf(stdout, "\033[32mAccounts Online List:%s\033[0m\n", this->myMessage.msg);
+                            fprintf(stdout, "\033[32mAccounts Online List: %s\033[0m\n", this->myMessage.msg);
                             break;
                         case ACCEPT_NORMAL_OFFLINE:
                             fprintf(stdout, "Prepared to be offline.\n");
@@ -240,6 +240,4 @@ void Client::Start()
     }
     //this->Close();
 }
-
-//void Client::Close() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
 Client::~Client() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
