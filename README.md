@@ -1,11 +1,3 @@
-<!--
- * @Author: your name
- * @Date: 2021-03-01 20:54:21
- * @LastEditTime: 2021-03-02 22:43:35
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /cpp-imsoftware/README.md
--->
 # C++实现的TCP即时通讯软件
 
 <p align="center">
@@ -14,10 +6,17 @@
 <a href="#IPv6" alt="platform"><img src="https://img.shields.io/badge/network-IPv4%20%7C%20IPv6-brightgreen" /></a>
 <a href="#Protocol" alt="platform"><img src="https://img.shields.io/badge/protocol-TCP-brightgreen" /></a>
 </p>
+<img src="https://i.loli.net/2021/03/06/bd5er7Tj3SGxMJA.png" alt="截图录屏_选择区域_20210306162652.png" style="zoom:100%;" />
 
-![截图录屏_deepin-terminal_20210302193612.png](https://i.loli.net/2021/03/02/fNZztWLxnYPr5hU.png)
+## 基本功能
+
+群聊:white_check_mark:、私聊:white_check_mark:、获取用户列表:white_check_mark:
+
+用户数据持久化:white_check_mark:、支持IPv6网络:white_check_mark:
+
 ## 安装
-### Linux
+
+### Linux:penguin:
 #### 安装```libmysqlclient-dev```
 ```bash
 sudo apt install libmysqlclient-dev
@@ -52,6 +51,8 @@ cd bin/
 ```
 
 ## 未来优化方向
-+ 对数据传输进行加密
-+ 增加图形界面
-+ 补充私聊、好友列表、用户组的功能
++ 加密数据传输:closed_lock_with_key:
++ 增加图形界面:computer:
++ 聊天记录持久化:floppy_disk:
++ 文件传输:file_folder:
+

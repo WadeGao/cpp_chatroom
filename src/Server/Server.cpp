@@ -165,7 +165,7 @@ void Server::Start()
                 //打印错误记录
                 if (authVerifyStatusCode != CLIENT_CHECK_SUCCESS)
                 {
-                    close(clientfd);
+                    //close(clientfd);
 
                     switch (authVerifyStatusCode)
                     {
@@ -181,7 +181,7 @@ void Server::Start()
                     default:
                         break;
                     }
-                    continue;
+                    //continue;
                 }
 
                 //发送给客户端登录状态码
@@ -191,6 +191,13 @@ void Server::Start()
                     fprintf(stderr, "\033[31mSend login code error! Ignore connection from %s:%s\n\033[0m", myConnInfo.Host, myConnInfo.Serv);
                     continue;
                 }
+
+                if (authVerifyStatusCode != CLIENT_CHECK_SUCCESS)
+                {
+                    close(clientfd);
+                    continue;
+                }
+
                 //至此身份核查已通过,查数据库完善信息，并添加信息到系统文件描述表和映射表
                 this->AddMappingInfo(clientfd, thisConnIdentity.ID);
 
@@ -213,7 +220,7 @@ void Server::Start()
                 if (!len)
                 {
                     auto ClosedAccount = this->Fd2_ID_Nickname[sockfd].first.c_str();
-                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", sockfd, ClosedAccount, this->client_list.size());
+                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) crashed. Now %lu client(s) online.\n\033[0m", sockfd, ClosedAccount, this->client_list.size() - 1);
                     this->MakeSomeoneOffline(sockfd, false);
                     continue;
                 }
@@ -237,7 +244,7 @@ void Server::Start()
                 case REQUEST_NORMAL_OFFLINE:
                     if (this->SendAcceptNormalOffline(sockfd) < 0)
                         continue;
-                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", sockfd, this->Fd2_ID_Nickname[sockfd].first.c_str(), this->client_list.size() - 1);
+                    fprintf(stdout, "\033[31mClientfd %d (Account is %s) quited normally. Now %lu client(s) online.\n\033[0m", sockfd, this->Fd2_ID_Nickname[sockfd].first.c_str(), this->client_list.size() - 1);
                     this->MakeSomeoneOffline(sockfd, false);
                     break;
                 default:

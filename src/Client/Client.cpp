@@ -1,4 +1,5 @@
 #include "Client.h"
+#include <ctime>
 #include <iostream>
 #include <sys/prctl.h>
 #include <sys/wait.h>
@@ -116,6 +117,7 @@ void Client::RecvLoginStatus()
 
 void Client::Start()
 {
+    this->Connect();
     fprintf(stdout, " ______________________________________________________________\n");
     fprintf(stdout, "|_______________________Message Type Code______________________|\n");
     fprintf(stdout, "|                                                              |\n");
@@ -125,7 +127,6 @@ void Client::Start()
     fprintf(stdout, "| Logout the chatroom -------------------------------------> 4 |\n");
     fprintf(stdout, "|______________________________________________________________|\n");
     static struct epoll_event events[2];
-    this->Connect();
     signal(SIGCHLD, handlerSIGCHLD);
     fflush(nullptr);
 
@@ -140,16 +141,19 @@ void Client::Start()
         prctl(PR_SET_PDEATHSIG, SIGKILL);
 
         close(this->pipe_fd[0]);
-        //fprintf(stdout, "\033[31mPlease input 'LOGOUT' to exit the chat room\n\033[0m");
         while (this->isClientWork)
         {
-        MsgSelectPoint:
+            //TODO:这里的错误输入处理机制有问题
             bzero(&this->myMessage, sizeof(MessageType));
-            fprintf(stdout, "Message Type Code: \n");
+            //fprintf(stdout, "Message Type Code: \n");
             int selectCode;
+            fflush(stdin);
             std::cin >> selectCode;
             if (selectCode > 4 || !selectCode)
-                goto MsgSelectPoint;
+            {
+                std::cout << "Invalid selection: " << selectCode << std::endl;
+                continue;
+            }
 
             switch (selectCode)
             {
@@ -157,30 +161,28 @@ void Client::Start()
                 this->myMessage.OperCode = REQUEST_NORMAL_OFFLINE;
                 break;
             case 3: //Get Online List
-                //TODO:完成客户端请求在线列表
                 this->myMessage.OperCode = REQUEST_ONLINE_LIST;
                 break;
             case 2: //Private Message
                 this->myMessage.OperCode = PRIVATE_MSG;
                 fprintf(stdout, "Send to account: ");
                 std::cin >> this->myMessage.msg_code.Whom;
-                //std::cin.getline(this->myMessage.msg_code.Whom, MAX_ACCOUNT_LEN);
-                //fgets(this->myMessage.msg_code.Whom, MAX_ACCOUNT_LEN, stdin);
-                fprintf(stdout, "Msg sent to %s: ", this->myMessage.msg_code.Whom);
-                std::cin >> this->myMessage.msg;
-                //std::cin.getline(this->myMessage.msg, BUF_SIZE);
-                //fgets(this->myMessage.msg, BUF_SIZE, stdin);
+
+                fprintf(stdout, "给%s的私聊消息: ", this->myMessage.msg_code.Whom);
+                getchar();
+                std::cin.getline(this->myMessage.msg, BUF_SIZE);
+
                 break;
             case 1: //Group Message
                 this->myMessage.OperCode = GROUP_MSG;
-                std::cin >> this->myMessage.msg;
-                //std::cin.getline(this->myMessage.msg, BUF_SIZE);
-                //fgets(this->myMessage.msg, BUF_SIZE, stdin);
+                getchar();
+                fprintf(stdout, "要发送的群聊消息: ");
+                std::cin.getline(this->myMessage.msg, BUF_SIZE);
+
                 break;
             default:
                 break;
             }
-
             if (write(this->pipe_fd[1], reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType)) < 0)
                 exit(CLIENT_WRITE_ERROR);
         }
@@ -203,24 +205,25 @@ void Client::Start()
                     }
                     else
                     {
+                        auto curTime = Client::getTime();
                         switch (this->myMessage.OperCode)
                         {
                         case WELCOME_WITH_IDENTITY_MSG:
-                            fprintf(stdout, "%s\n", this->myMessage.msg);
+                            fprintf(stdout, "[%s] %s\n", curTime.c_str(), this->myMessage.msg);
                             break;
                         case GROUP_MSG:
-                            fprintf(stdout, "\033[32m%s >>> %s\033[0m\n", this->myMessage.msg_code.Whom, this->myMessage.msg);
+                            fprintf(stdout, "\033[32m[%s] %s >>> %s\033[0m\n", curTime.c_str(), this->myMessage.msg_code.Whom, this->myMessage.msg);
                             break;
                         case PRIVATE_MSG:
-                            fprintf(stdout, "\033[32m%s(private) >>> %s\033[0m\n", this->myMessage.msg_code.Whom, this->myMessage.msg);
+                            fprintf(stdout, "\033[32m[%s] %s(private) >>> %s\033[0m\n", curTime.c_str(), this->myMessage.msg_code.Whom, this->myMessage.msg);
                             break;
                         case REPLY_ONLINE_LIST:
                             //TODO:完善在线列表回复
-                            fprintf(stdout, "\033[32mAccounts Online num: %lu\033[0m\n", this->myMessage.msg_code.online_num);
-                            fprintf(stdout, "\033[32mAccounts Online List: %s\033[0m\n", this->myMessage.msg);
+                            fprintf(stdout, "\033[32m[%s] Accounts Online num: %lu\033[0m\n", curTime.c_str(), this->myMessage.msg_code.online_num);
+                            fprintf(stdout, "\033[32m[%s] Accounts Online List: %s\033[0m\n", curTime.c_str(), this->myMessage.msg);
                             break;
                         case ACCEPT_NORMAL_OFFLINE:
-                            fprintf(stdout, "Prepared to be offline.\n");
+                            fprintf(stdout, "\033[32m[%s] Prepared to be offline.\033[0m\n", curTime.c_str());
                             exit(EXIT_SUCCESS);
                             break;
                         default:
@@ -241,3 +244,12 @@ void Client::Start()
     //this->Close();
 }
 Client::~Client() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
+
+std::string Client::getTime()
+{
+    time_t timep;
+    time(&timep);
+    char ret[24];
+    strftime(ret, sizeof(ret), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+    return std::string(ret);
+}

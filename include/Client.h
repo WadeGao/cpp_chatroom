@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-06 11:22:20
+ * @LastEditTime: 2021-03-06 17:41:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -39,6 +39,7 @@ private:
     void Connect();
     void TellMyIdentity(); //向服务器发送输入的ID和密码
     void RecvLoginStatus();
+    static std::string getTime();
 
 public:
     Client(const char *id, const char *pwd);

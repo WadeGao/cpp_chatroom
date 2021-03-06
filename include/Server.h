@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-06 10:05:29
+ * @LastEditTime: 2021-03-06 18:32:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
@@ -19,9 +19,10 @@
 #define BACK_LOG 1024
 
 //MySQL服务器配置信息
-#define DATABASE_DOMAIN "wadegao.tpddns.net"
+//#define DATABASE_DOMAIN "wadegao.tpddns.net"
+#define DATABASE_DOMAIN "127.0.0.1"
 #define DATABASE_NAME "ChatRoom"
-#define DATABASE_ADMIN "ServerChatRoom"
+#define DATABASE_ADMIN "root"
 
 //格式化报文信息
 #define SERVER_WELCOME "\033[31mWelcome to join the chat room! You Nickname is %s\033[0m"
