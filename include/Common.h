@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-06 10:24:18
+ * @LastEditTime: 2021-03-06 11:06:35
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -30,7 +30,6 @@
 #define SERVER_DOMAIN "127.0.0.1"
 #define SERVER_PORT "8888"
 
-//#define BUF_SIZE 2048
 const size_t BUF_SIZE = 2048;
 
 //身份格式限制

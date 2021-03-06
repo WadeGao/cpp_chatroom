@@ -214,8 +214,8 @@ void Server::Start()
                 if (!len)
                 {
                     auto ClosedAccount = this->Fd2_ID_Nickname[sockfd].first.c_str();
-                    this->MakeSomeoneOffline(sockfd, false);
                     fprintf(stdout, "\033[31mClientfd %d (Account is %s) closed. Now %lu client(s) online.\n\033[0m", sockfd, ClosedAccount, this->client_list.size());
+                    this->MakeSomeoneOffline(sockfd, false);
                     continue;
                 }
 
@@ -314,7 +314,7 @@ ssize_t Server::SendWelcomeMsg(int clientfd)
     MessageType welcomeMessageToSend;
     bzero(&welcomeMessageToSend, sizeof(MessageType));
     welcomeMessageToSend.OperCode = WELCOME_WITH_IDENTITY_MSG;
-    snprintf(welcomeMessageToSend.msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname.find(clientfd)->second.second.c_str());
+    snprintf(welcomeMessageToSend.msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname[clientfd].second.c_str());
     return send(clientfd, reinterpret_cast<void *>(&welcomeMessageToSend), sizeof(MessageType), 0);
 }
 
@@ -341,7 +341,7 @@ ssize_t Server::SendPrivateMsg(const int fd_from, const int fd_to, const char *M
     bzero(&privateMessageToSend, sizeof(MessageType));
     privateMessageToSend.OperCode = PRIVATE_MSG;
     memcpy(privateMessageToSend.msg, MessageToSend, BUF_SIZE);
-    snprintf(privateMessageToSend.msg_code.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[fd_from].first.c_str());
+    snprintf(privateMessageToSend.msg_code.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[fd_from].second.c_str());
     return send(fd_to, reinterpret_cast<const void *>(&privateMessageToSend), sizeof(MessageType), 0);
 }
 
@@ -358,7 +358,7 @@ ssize_t Server::SendOnlineList(const int clientfd)
         AccountsSplitByComma << iter.first << ",";
 
     auto accountPtr = AccountsSplitByComma.str().c_str();
-    memcpy(OnlineListMessageToSend.msg, accountPtr, std::min(size_t(BUF_SIZE), strlen(accountPtr) - 1));
+    memcpy(OnlineListMessageToSend.msg, accountPtr, std::min(BUF_SIZE, strlen(accountPtr) - 1));
     return send(clientfd, reinterpret_cast<const void *>(&OnlineListMessageToSend), sizeof(MessageType), 0);
 }
 

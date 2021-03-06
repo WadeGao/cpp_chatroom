@@ -163,15 +163,18 @@ void Client::Start()
             case 2: //Private Message
                 this->myMessage.OperCode = PRIVATE_MSG;
                 fprintf(stdout, "Send to account: ");
-                std::cin.getline(this->myMessage.msg_code.Whom, MAX_ACCOUNT_LEN);
+                std::cin >> this->myMessage.msg_code.Whom;
+                //std::cin.getline(this->myMessage.msg_code.Whom, MAX_ACCOUNT_LEN);
                 //fgets(this->myMessage.msg_code.Whom, MAX_ACCOUNT_LEN, stdin);
                 fprintf(stdout, "Msg sent to %s: ", this->myMessage.msg_code.Whom);
-                std::cin.getline(this->myMessage.msg, BUF_SIZE);
+                std::cin >> this->myMessage.msg;
+                //std::cin.getline(this->myMessage.msg, BUF_SIZE);
                 //fgets(this->myMessage.msg, BUF_SIZE, stdin);
                 break;
             case 1: //Group Message
                 this->myMessage.OperCode = GROUP_MSG;
-                std::cin.getline(this->myMessage.msg, BUF_SIZE);
+                std::cin >> this->myMessage.msg;
+                //std::cin.getline(this->myMessage.msg, BUF_SIZE);
                 //fgets(this->myMessage.msg, BUF_SIZE, stdin);
                 break;
             default:
@@ -206,14 +209,15 @@ void Client::Start()
                             fprintf(stdout, "%s\n", this->myMessage.msg);
                             break;
                         case GROUP_MSG:
-                            fprintf(stdout, "\033[32m%s >>> %s\033[0m\n", myMessage.msg_code.Whom, myMessage.msg);
+                            fprintf(stdout, "\033[32m%s >>> %s\033[0m\n", this->myMessage.msg_code.Whom, this->myMessage.msg);
                             break;
                         case PRIVATE_MSG:
-                            fprintf(stdout, "\033[32m%s(private) >>> %s\033[0m\n", myMessage.msg_code.Whom, myMessage.msg);
+                            fprintf(stdout, "\033[32m%s(private) >>> %s\033[0m\n", this->myMessage.msg_code.Whom, this->myMessage.msg);
                             break;
                         case REPLY_ONLINE_LIST:
                             //TODO:完善在线列表回复
-                            fprintf(stdout, "\033[32mAccounts Online num: %d\nAccounts Online List:%s\n\033[0m\n", myMessage.msg_code.online_num, myMessage.msg);
+                            fprintf(stdout, "\033[32mAccounts Online num: %lu\033[0m\n", this->myMessage.msg_code.online_num);
+                            fprintf(stdout, "\033[32mAccounts Online List:%s\033[0m\n", this->myMessage.msg);
                             break;
                         case ACCEPT_NORMAL_OFFLINE:
                             fprintf(stdout, "Prepared to be offline.\n");
