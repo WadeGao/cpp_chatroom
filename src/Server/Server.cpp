@@ -131,13 +131,13 @@ void Server::Start()
         for (decltype(epoll_events_count) i = 0; i < epoll_events_count; i++)
         {
             auto sockfd = events[i].data.fd;
-            if (sockfd == listener)
+            if (sockfd == this->listener)
             {
                 struct sockaddr_in client_address
                 {
                 };
                 socklen_t client_addrLength = sizeof(struct sockaddr_in);
-                auto clientfd = accept(listener, reinterpret_cast<sockaddr *>(&client_address), &client_addrLength);
+                auto clientfd = accept(this->listener, reinterpret_cast<sockaddr *>(&client_address), &client_addrLength);
                 if (clientfd < 0)
                 {
                     if (errno == EINTR)
