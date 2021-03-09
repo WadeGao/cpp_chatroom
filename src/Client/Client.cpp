@@ -1,4 +1,5 @@
 #include "Client.h"
+#include "Common.h"
 #include <ctime>
 #include <iostream>
 #include <sys/prctl.h>
@@ -14,8 +15,8 @@ static void handlerSIGCHLD(int signo)
 
 Client::Client(const char *id, const char *pwd)
 {
-    memcpy(this->myIdentity.ID, id, strlen(id));
-    memcpy(this->myIdentity.Password, pwd, strlen(pwd));
+    memcpy(this->myID, id, strlen(id));
+    memcpy(this->myPassword, pwd, strlen(pwd));
 
     addrinfo hints{}, *ret, *cur;
     bzero(&hints, sizeof(hints));
@@ -23,7 +24,7 @@ Client::Client(const char *id, const char *pwd)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_ALL;
     hints.ai_protocol = 0;
-    auto err = getaddrinfo(SERVER_DOMAIN, SERVER_PORT, &hints, &ret);
+    auto err = getaddrinfo(SERVER_DOMAIN, SERVER_NEW_USER_PORT, &hints, &ret);
     if (err != 0)
     {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(err));
@@ -66,7 +67,6 @@ Client::Client(const char *id, const char *pwd)
 
 void Client::Connect()
 {
-    //告知用户身份
     this->TellMyIdentity();
     this->RecvLoginStatus();
 }
@@ -74,10 +74,14 @@ void Client::Connect()
 //向服务器发送输入的ID和密码
 void Client::TellMyIdentity()
 {
-    if (send(this->sock, reinterpret_cast<const void *>(&this->myIdentity), sizeof(ClientIdentityType), 0) < 0)
+    bzero(this->sendBuf, sizeof(ClientLoginMessageType));
+    reinterpret_cast<ClientLoginMessageType *>(this->sendBuf)->OperCode = CLIENT_LOGIN_MSG;
+    memcpy(reinterpret_cast<ClientLoginMessageType *>(this->sendBuf)->ID, this->myID, strlen(this->myID));
+    memcpy(reinterpret_cast<ClientLoginMessageType *>(this->sendBuf)->Password, this->myPassword, strlen(this->myPassword));
+
+    if (send(this->sock, reinterpret_cast<const void *>(this->sendBuf), sizeof(ClientLoginMessageType), 0) < 0)
     {
         fprintf(stderr, "Send authentication error\n");
-        //this->Close();
         exit(CLIENT_SEND_ERROR);
     }
 }
@@ -86,29 +90,25 @@ void Client::RecvLoginStatus()
 {
     auto old_fd_status = fcntl(this->sock, F_GETFD, 0);
     fcntl(this->sock, F_SETFL, fcntl(this->sock, F_GETFD, 0) & ~O_NONBLOCK);
-    auto len = recv(this->sock, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType), 0);
+    auto len = recv(this->sock, reinterpret_cast<ServerLoginCodeMessageType *>(this->recvBuf), sizeof(ServerLoginCodeMessageType), 0);
     fcntl(this->sock, F_SETFL, old_fd_status);
 
-    if (len < 0)
+    if (len < 0 || reinterpret_cast<ServerLoginCodeMessageType *>(this->recvBuf)->OperCode != SERVER_LOGIN_MSG)
     {
         fprintf(stderr, "Error occurs, %s\n", strerror(errno));
-        //this->Close();
         exit(CLIENT_RECV_ERROR);
     }
 
-    switch (this->myMessage.msg_code.Code)
+    switch (reinterpret_cast<ServerLoginCodeMessageType *>(this->recvBuf)->CheckCode)
     {
     case CLIENT_ID_NOT_EXIST:
         fprintf(stderr, "Account not exists, please check your account\n");
-        //this->Close();
         exit(CLIENT_ID_NOT_EXIST);
     case WRONG_CLIENT_PASSWORD:
         fprintf(stderr, "Account's password error, please check your password\n");
-        //this->Close();
         exit(WRONG_CLIENT_PASSWORD);
     case DUPLICATED_LOGIN:
         fprintf(stderr, "Account has been online!\n");
-        //this->Close();
         exit(DUPLICATED_LOGIN);
     default:
         break;
@@ -137,15 +137,11 @@ void Client::Start()
     }
     else if (!this->pid)
     {
-        //TODO:https://zhuanlan.zhihu.com/p/58708945 父进程死亡子进程同时死亡
         prctl(PR_SET_PDEATHSIG, SIGKILL);
-
         close(this->pipe_fd[0]);
         while (this->isClientWork)
         {
             //TODO:这里的错误输入处理机制有问题
-            bzero(&this->myMessage, sizeof(MessageType));
-            //fprintf(stdout, "Message Type Code: \n");
             int selectCode;
             fflush(stdin);
             std::cin >> selectCode;
@@ -155,35 +151,38 @@ void Client::Start()
                 continue;
             }
 
+            bzero(this->sendBuf, maxBufToMalloc);
+            size_t writeBytes{0};
             switch (selectCode)
             {
             case 4: //Logout
-                this->myMessage.OperCode = REQUEST_NORMAL_OFFLINE;
+                reinterpret_cast<LogoutMessageType *>(this->sendBuf)->OperCode = REQUEST_NORMAL_OFFLINE;
+                writeBytes = sizeof(LogoutMessageType);
                 break;
             case 3: //Get Online List
-                this->myMessage.OperCode = REQUEST_ONLINE_LIST;
+                reinterpret_cast<OnlineListRequestType *>(this->sendBuf)->OperCode = REQUEST_ONLINE_LIST;
+                writeBytes = sizeof(OnlineListRequestType);
                 break;
             case 2: //Private Message
-                this->myMessage.OperCode = PRIVATE_MSG;
+                reinterpret_cast<ChatMessageType *>(this->sendBuf)->OperCode = PRIVATE_MSG;
                 fprintf(stdout, "Send to account: ");
-                std::cin >> this->myMessage.msg_code.Whom;
-
-                fprintf(stdout, "给%s的私聊消息: ", this->myMessage.msg_code.Whom);
+                std::cin >> reinterpret_cast<ChatMessageType *>(this->sendBuf)->Whom;
+                fprintf(stdout, "给%s的私聊消息: ", reinterpret_cast<ChatMessageType *>(this->sendBuf)->Whom);
                 getchar();
-                std::cin.getline(this->myMessage.msg, BUF_SIZE);
-
+                std::cin.getline(reinterpret_cast<ChatMessageType *>(this->sendBuf)->Msg, BUF_SIZE);
+                writeBytes = sizeof(ChatMessageType);
                 break;
             case 1: //Group Message
-                this->myMessage.OperCode = GROUP_MSG;
+                reinterpret_cast<ChatMessageType *>(this->sendBuf)->OperCode = GROUP_MSG;
                 getchar();
                 fprintf(stdout, "要发送的群聊消息: ");
-                std::cin.getline(this->myMessage.msg, BUF_SIZE);
-
+                std::cin.getline(reinterpret_cast<ChatMessageType *>(this->sendBuf)->Msg, BUF_SIZE);
+                writeBytes = sizeof(ChatMessageType);
                 break;
             default:
                 break;
             }
-            if (write(this->pipe_fd[1], reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType)) < 0)
+            if (write(this->pipe_fd[1], reinterpret_cast<const void *>(this->sendBuf), writeBytes) < 0)
                 exit(CLIENT_WRITE_ERROR);
         }
     }
@@ -195,35 +194,32 @@ void Client::Start()
             auto epoll_event_count = epoll_wait(this->epfd, events, 2, -1);
             for (int i = 0; i < epoll_event_count; i++)
             {
-                bzero(&this->myMessage, BUF_SIZE);
+                bzero(this->recvBuf, maxBufToMalloc);
                 if (events[i].data.fd == this->sock) //服务端发来消息
                 {
-                    if (!recv(this->sock, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType), 0))
+                    if (!recv(this->sock, reinterpret_cast<void *>(this->recvBuf), maxBufToMalloc, 0))
                     {
                         this->isClientWork = false;
                         fprintf(stderr, "Server closed.\n");
                     }
                     else
                     {
-                        auto curTime = Client::getTime();
-                        switch (this->myMessage.OperCode)
+                        auto curTime = getTime();
+                        switch (reinterpret_cast<MessageType *>(recvBuf)->OperCode)
                         {
-                        case WELCOME_WITH_IDENTITY_MSG:
-                            fprintf(stdout, "[%s] %s\n", curTime.c_str(), this->myMessage.msg);
-                            break;
                         case GROUP_MSG:
-                            fprintf(stdout, "\033[32m[%s] %s >>> %s\033[0m\n", curTime.c_str(), this->myMessage.msg_code.Whom, this->myMessage.msg);
+                            fprintf(stdout, "[%s] %s >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
                             break;
                         case PRIVATE_MSG:
-                            fprintf(stdout, "\033[32m[%s] %s(private) >>> %s\033[0m\n", curTime.c_str(), this->myMessage.msg_code.Whom, this->myMessage.msg);
+                            fprintf(stdout, "[%s] %s(private) >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
                             break;
                         case REPLY_ONLINE_LIST:
                             //TODO:完善在线列表回复
-                            fprintf(stdout, "\033[32m[%s] Accounts Online num: %lu\033[0m\n", curTime.c_str(), this->myMessage.msg_code.online_num);
-                            fprintf(stdout, "\033[32m[%s] Accounts Online List: %s\033[0m\n", curTime.c_str(), this->myMessage.msg);
+                            fprintf(stdout, "[%s] Accounts Online num: %lu\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
+                            fprintf(stdout, "[%s] Accounts Online List: %s\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->List);
                             break;
-                        case ACCEPT_NORMAL_OFFLINE:
-                            fprintf(stdout, "\033[32m[%s] Prepared to be offline.\033[0m\n", curTime.c_str());
+                        case REPLY_NORMAL_OFFLINE:
+                            fprintf(stdout, "[%s] Prepared to be offline.\n", curTime.c_str());
                             exit(EXIT_SUCCESS);
                             break;
                         default:
@@ -233,23 +229,13 @@ void Client::Start()
                 }
                 else //子进程写入事件发生，父进程处理并发送服务端
                 {
-                    if (read(events[i].data.fd, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType)) == 0) //子进程死了
+                    if (read(events[i].data.fd, reinterpret_cast<void *>(this->sendBuf), maxBufToMalloc) == 0) //子进程死了
                         this->isClientWork = false;
                     else
-                        send(this->sock, reinterpret_cast<void *>(&this->myMessage), sizeof(MessageType), 0);
+                        send(this->sock, reinterpret_cast<void *>(this->sendBuf), maxBufToMalloc, 0);
                 }
             }
         }
     }
-    //this->Close();
 }
 Client::~Client() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
-
-std::string Client::getTime()
-{
-    time_t timep;
-    time(&timep);
-    char ret[24];
-    strftime(ret, sizeof(ret), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-    return std::string(ret);
-}

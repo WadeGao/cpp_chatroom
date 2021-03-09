@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-06 17:41:51
+ * @LastEditTime: 2021-03-09 16:24:22
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -10,8 +10,6 @@
 #define __CLIENT_H__
 
 #include "Common.h"
-#define LOGOUT "LOGOUT"
-
 //状态码
 enum CLIENT_CHECK_CODE
 {
@@ -29,17 +27,20 @@ enum CLIENT_CHECK_CODE
 class Client
 {
 private:
+    char myID[MAX_ACCOUNT_LEN]{0};
+    char myPassword[MAX_PASSWORD_LEN]{0};
+    char sendBuf[maxBufToMalloc]{0};
+    char recvBuf[maxBufToMalloc]{0};
+
     int sock{0};
     pid_t pid{0};
     int epfd{0};
     int pipe_fd[2]{};
     bool isClientWork{true};
-    ClientIdentityType myIdentity{};
-    MessageType myMessage;
+
     void Connect();
     void TellMyIdentity(); //向服务器发送输入的ID和密码
     void RecvLoginStatus();
-    static std::string getTime();
 
 public:
     Client(const char *id, const char *pwd);

@@ -15,5 +15,6 @@ include_directories(${INC_DIR})
 
 # 添加当前目录下所有的源文件
 aux_source_directory(${ROOT}/src/Client CLIENT_ALL_SRCS)
+aux_source_directory(${ROOT}/src/Common COMMON_ALL_SRC)
 
-add_executable(Client ${CLIENT_ALL_SRCS})
+add_executable(Client ${CLIENT_ALL_SRCS} ${COMMON_ALL_SRC})

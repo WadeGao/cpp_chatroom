@@ -1,13 +1,12 @@
 /*
  * @Author: your name
  * @Date: 2020-12-20 22:03:34
- * @LastEditTime: 2021-03-05 23:11:38
+ * @LastEditTime: 2021-03-09 16:23:21
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /IM_Software/ClientMain.cpp
  */
 #include "Client.h"
-#include <iostream>
 
 int main(int argc, char *argv[])
 {

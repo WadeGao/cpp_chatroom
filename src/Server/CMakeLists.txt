@@ -18,6 +18,7 @@ include_directories(${INC_DIR})
 
 # 添加当前目录下所有的源文件
 aux_source_directory(${ROOT}/src/Server SERVER_ALL_SRCS)
-aux_source_directory(${ROOT}/src/Common DATABASE_ALL_SRC)
+aux_source_directory(${ROOT}/src/Database DATABASE_ALL_SRC)
+aux_source_directory(${ROOT}/src/Common COMMON_ALL_SRC)
 
-add_executable(Server ${SERVER_ALL_SRCS} ${DATABASE_ALL_SRC})
+add_executable(Server ${SERVER_ALL_SRCS} ${DATABASE_ALL_SRC} ${COMMON_ALL_SRC})
