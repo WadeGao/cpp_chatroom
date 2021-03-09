@@ -1,3 +1,11 @@
+<!--
+ * @Author: your name
+ * @Date: 2021-03-01 20:54:21
+ * @LastEditTime: 2021-03-09 17:20:19
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: /cpp-imsoftware/README.md
+-->
 # C++实现的TCP即时通讯软件
 
 <p align="center">
@@ -51,8 +59,8 @@ cd bin/
 ```
 
 ## 未来优化方向
++ 文件传输:file_folder:
 + 加密数据传输:closed_lock_with_key:
 + 增加图形界面:computer:
 + 聊天记录持久化:floppy_disk:
-+ 文件传输:file_folder:
-
++ 完善$epoll$配套的线程池
