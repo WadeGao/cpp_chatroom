@@ -1,13 +1,13 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-09 17:14:33
+ * @LastEditTime: 2021-03-10 21:36:44
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
  */
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef COMMON_H_
+#define COMMON_H_
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -27,7 +27,7 @@
 #include <vector>
 
 //转发服务器配置信息
-#define SERVER_DOMAIN "127.0.0.1"
+#define SERVER_DOMAIN "wadegao.tpddns.net"
 #define SERVER_NEW_USER_PORT "8888"
 
 const size_t BUF_SIZE = 2048;
@@ -44,16 +44,16 @@ const size_t BUF_SIZE = 2048;
 #define DUPLICATED_LOGIN 503
 
 //消息操作码
-#define CLIENT_LOGIN_MSG 599
-#define SERVER_LOGIN_MSG 600
+#define CLIENT_LOGIN_MSG 600
+#define SERVER_LOGIN_MSG 605
 
-#define PRIVATE_MSG 602
-#define GROUP_MSG 610
+#define PRIVATE_MSG 610
+#define GROUP_MSG 615
 
 #define REQUEST_ONLINE_LIST 700
 #define REPLY_ONLINE_LIST 705
 
-#define REQUEST_NORMAL_OFFLINE 801
+#define REQUEST_NORMAL_OFFLINE 800
 #define REPLY_NORMAL_OFFLINE 805
 
 #define FORCE_OFFLINE 900

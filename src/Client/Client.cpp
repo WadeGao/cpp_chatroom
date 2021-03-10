@@ -214,7 +214,6 @@ void Client::Start()
                             fprintf(stdout, "[%s] %s(private) >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
                             break;
                         case REPLY_ONLINE_LIST:
-                            //TODO:完善在线列表回复
                             fprintf(stdout, "[%s] Accounts Online num: %lu\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
                             fprintf(stdout, "[%s] Accounts Online List: %s\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->List);
                             break;

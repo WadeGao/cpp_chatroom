@@ -6,8 +6,8 @@
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
  */
-#ifndef __CLIENT_H__
-#define __CLIENT_H__
+#ifndef CLIENT_H_
+#define CLIENT_H_
 
 #include "Common.h"
 //状态码

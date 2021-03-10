@@ -1,16 +1,17 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-09 17:13:48
+ * @LastEditTime: 2021-03-10 16:58:31
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Server.h
  */
-#ifndef __SERVER_H__
-#define __SERVER_H__
+#ifndef SERVER_H_
+#define SERVER_H_
 
 #include "Common.h"
 #include "Database.h"
+#include "ThreadPool.hpp"
 #include <unordered_map>
 #include <utility>
 
@@ -20,14 +21,14 @@
 
 //MySQL服务器配置信息
 //#define DATABASE_DOMAIN "wadegao.tpddns.net"
-#define DATABASE_DOMAIN "127.0.0.1"
+#define DATABASE_DOMAIN "wadegao.tpddns.net"
 #define DATABASE_NAME "ChatRoom"
-#define DATABASE_ADMIN "root"
+#define DATABASE_ADMIN "ServerChatRoom"
 
 //格式化报文信息
-#define SERVER_WELCOME "\033[31mWelcome to join the chat room! You Nickname is %s\033[0m"
-#define SERVER_MSG "\033[32m%s >>> %s\033[0m\n"
-#define CAUTION "\033[31mYou're the only one in the chat room!\033[0m"
+#define SERVER_WELCOME "Welcome to join the chat room! You Nickname is %s"
+#define SERVER_MSG "%s >>> %s\n"
+#define CAUTION "You're the only one in the chat room!"
 
 //状态码
 enum SERVER_CHECK_CODE
@@ -54,6 +55,8 @@ class Server
 {
 private:
     Database db;
+    ThreadPool myPool;
+    std::vector<std::future<ssize_t>> ProcessingFunctionRet;
     int newUserListener{0};
     int epfd{0};
 

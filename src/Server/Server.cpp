@@ -1,6 +1,6 @@
 #include "Server.h"
 
-Server::Server()
+Server::Server() : myPool(maxThreadsNum)
 {
     if (!this->Conn2DB(DATABASE_DOMAIN, "3306", DATABASE_ADMIN, DATABASE_NAME))
     {
@@ -149,97 +149,99 @@ void Server::Start()
                     continue;
                 }
                 else if (recvRet < 0)
-                {
                     if (errno == EAGAIN)
                         goto READ_AGAIN;
-                }
-
-                sockaddr_in client_address;
-                socklen_t client_addrLength = sizeof(sockaddr_in);
-                getpeername(clientfd, reinterpret_cast<sockaddr *>(&client_address), &client_addrLength);
-                char Client_IP[128]{0};
-                inet_ntop(client_address.sin_family, &client_address.sin_addr, Client_IP, sizeof(Client_IP));
 
                 switch (reinterpret_cast<MessageType *>(generalizedMessageToRecv)->OperCode)
                 {
                 case CLIENT_LOGIN_MSG:
                 {
-                    auto thisIdentity = reinterpret_cast<ClientLoginMessageType *>(generalizedMessageToRecv);
-                    auto authVerifyStatusCode = this->AccountVerification(thisIdentity->ID, thisIdentity->Password);
+                    auto processerWhenNewLogin = [this, &clientfd, &generalizedMessageToRecv]() -> ssize_t {
+                        sockaddr_in client_address;
+                        socklen_t client_addrLength = sizeof(sockaddr_in);
+                        getpeername(clientfd, reinterpret_cast<sockaddr *>(&client_address), &client_addrLength);
+                        char Client_IP[128]{0};
+                        inet_ntop(client_address.sin_family, &client_address.sin_addr, Client_IP, sizeof(Client_IP));
+                        auto thisIdentity = reinterpret_cast<ClientLoginMessageType *>(generalizedMessageToRecv);
+                        auto authVerifyStatusCode = this->AccountVerification(thisIdentity->ID, thisIdentity->Password);
 
-                    if (authVerifyStatusCode != CLIENT_CHECK_SUCCESS)
-                    {
-                        switch (authVerifyStatusCode)
+                        if (authVerifyStatusCode != CLIENT_CHECK_SUCCESS)
                         {
-                        case CLIENT_ID_NOT_EXIST:
-                            fprintf(stderr, "Account Verification Failed! Account %s not exist!\n", thisIdentity->ID);
-                            break;
-                        case WRONG_CLIENT_PASSWORD:
-                            fprintf(stderr, "Account Verification Failed! Account %s exists but wrong password!\n", thisIdentity->ID);
-                            break;
-                        case DUPLICATED_LOGIN:
-                            fprintf(stderr, "Denied a duplicated connection of %s\n", thisIdentity->ID);
-                            break;
-                        default:
-                            break;
+                            switch (authVerifyStatusCode)
+                            {
+                            case CLIENT_ID_NOT_EXIST:
+                                fprintf(stderr, "Account Verification Failed! Account %s not exist!\n", thisIdentity->ID);
+                                break;
+                            case WRONG_CLIENT_PASSWORD:
+                                fprintf(stderr, "Account Verification Failed! Account %s exists but wrong password!\n", thisIdentity->ID);
+                                break;
+                            case DUPLICATED_LOGIN:
+                                fprintf(stderr, "Denied a duplicated connection of %s\n", thisIdentity->ID);
+                                break;
+                            default:
+                                break;
+                            }
                         }
-                    }
-                    //发送给客户端登录状态码
-                    if (this->SendLoginStatus(clientfd, authVerifyStatusCode) < 0)
-                    {
-                        close(clientfd);
-                        fprintf(stderr, "Send login code error! Ignore connection from %s:%d\n", Client_IP, ntohs(client_address.sin_port));
-                        continue;
-                    }
-                    if (authVerifyStatusCode != CLIENT_CHECK_SUCCESS)
-                    {
-                        close(clientfd);
-                        continue;
-                    }
-                    //至此身份核查已通过,查数据库完善信息，并添加信息到系统文件描述表和映射表
-                    this->AddMappingInfo(clientfd, thisIdentity->ID);
+                        //发送给客户端登录状态码
+                        ssize_t retCode{0};
+                        if ((retCode = this->SendLoginStatus(clientfd, authVerifyStatusCode)) < 0)
+                        {
+                            close(clientfd);
+                            fprintf(stderr, "Send login code error! Ignore connection from %s:%d\n", Client_IP, ntohs(client_address.sin_port));
+                            return retCode;
+                        }
+                        if (authVerifyStatusCode != CLIENT_CHECK_SUCCESS)
+                        {
+                            close(clientfd);
+                            return retCode;
+                        }
+                        //至此身份核查已通过,查数据库完善信息，并添加信息到系统文件描述表和映射表
+                        this->AddMappingInfo(clientfd, thisIdentity->ID);
+                        addfd(this->epfd, clientfd, true);
+                        fprintf(stdout, "Connection from %s:%d, Account is %s, clientfd = %d, Now %lu client(s) online\n", Client_IP, ntohs(client_address.sin_port), thisIdentity->ID, clientfd, this->client_list.size());
 
-                    addfd(this->epfd, clientfd, true);
-
-                    fprintf(stdout, "Connection from %s:%d, Account is %s, clientfd = %d, Now %lu client(s) online\n", Client_IP, ntohs(client_address.sin_port), thisIdentity->ID, clientfd, this->client_list.size());
-                    if (this->SendWelcomeMsg(clientfd) < 0)
-                    {
-                        fprintf(stderr, "Send welcome message to %s:%d error\n", Client_IP, ntohs(client_address.sin_port));
-                        this->MakeSomeoneOffline(clientfd, false);
-                    }
+                        if ((retCode = this->SendWelcomeMsg(clientfd)) < 0)
+                        {
+                            fprintf(stderr, "Send welcome message to %s:%d error\n", Client_IP, ntohs(client_address.sin_port));
+                            this->MakeSomeoneOffline(clientfd, false);
+                            return retCode;
+                        }
+                        return retCode;
+                    };
+                    this->ProcessingFunctionRet.emplace_back(this->myPool.enqueue(processerWhenNewLogin));
                     break;
                 }
+
                 case GROUP_MSG:
                 {
-                    if (this->SendBroadcastMsg(clientfd, reinterpret_cast<ChatMessageType *>(generalizedMessageToRecv)->Msg) < 0)
-                        continue;
+                    this->ProcessingFunctionRet.emplace_back(this->myPool.enqueue([this, &clientfd, &generalizedMessageToRecv] { return this->SendBroadcastMsg(clientfd, reinterpret_cast<const ChatMessageType *>(generalizedMessageToRecv)->Msg); }));
                     break;
                 }
 
                 case PRIVATE_MSG:
                 {
-                    auto thisPrivateMsgPtr = reinterpret_cast<ChatMessageType *>(generalizedMessageToRecv);
-                    if (this->ID_fd.find(thisPrivateMsgPtr->Whom) != this->ID_fd.end())
-                        if (this->SendPrivateMsg(clientfd, this->ID_fd[thisPrivateMsgPtr->Whom], thisPrivateMsgPtr->Msg) < 0)
-                            continue;
+                    this->ProcessingFunctionRet.emplace_back(this->myPool.enqueue([this, &generalizedMessageToRecv, &clientfd]() -> ssize_t {
+                        auto PrivateMsgPtr = reinterpret_cast<const ChatMessageType *>(generalizedMessageToRecv);
+                        return (this->ID_fd.find(PrivateMsgPtr->Whom) == this->ID_fd.end()) ? -1 : this->SendPrivateMsg(clientfd, this->ID_fd[PrivateMsgPtr->Whom], PrivateMsgPtr->Msg);
+                    }));
 
                     break;
                 }
 
                 case REQUEST_ONLINE_LIST:
                 {
-                    if (this->SendOnlineList(clientfd) < 0)
-                        continue;
+                    this->ProcessingFunctionRet.emplace_back(this->myPool.enqueue([this, &clientfd]() -> ssize_t { return this->SendOnlineList(clientfd); }));
                     break;
                 }
 
                 case REQUEST_NORMAL_OFFLINE:
                 {
-                    if (this->SendAcceptNormalOffline(clientfd) < 0)
-                        continue;
-                    fprintf(stdout, "Clientfd %d (Account is %s) quited normally. Now %lu client(s) online.\n", clientfd, this->Fd2_ID_Nickname[clientfd].first.c_str(), this->client_list.size() - 1);
-                    this->MakeSomeoneOffline(clientfd, false);
-                    break;
+                    this->ProcessingFunctionRet.emplace_back(this->myPool.enqueue([this, &clientfd]() -> ssize_t {
+                        auto sendStatus = this->SendAcceptNormalOffline(clientfd);
+                        fprintf(stdout, "Clientfd %d (Account is %s) quited normally. Now %lu client(s) online.\n", clientfd, this->Fd2_ID_Nickname[clientfd].first.c_str(), this->client_list.size() - 1);
+                        this->MakeSomeoneOffline(clientfd, false);
+                        return sendStatus;
+                    }));
                 }
 
                 default:
@@ -358,7 +360,6 @@ ssize_t Server::SendPrivateMsg(const int fd_from, const int fd_to, const char *M
 
 ssize_t Server::SendOnlineList(const int clientfd)
 {
-    //TODO:完成获取在线列表的实现
     OnlineListMessageType OnlineListMessageToSend;
     bzero(&OnlineListMessageToSend, sizeof(OnlineListMessageType));
     std::string AccountsSplitByComma;

@@ -12,7 +12,7 @@ set(INC_DIR ${ROOT}/include)
 
 #链接库，mysqlclient为库名
 link_libraries(mysqlclient)
-
+link_libraries(pthread)
 #指定头文件目录
 include_directories(${INC_DIR})
 

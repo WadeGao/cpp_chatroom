@@ -6,8 +6,8 @@
  * @Description: In User Settings Edit
  * @FilePath: /4Database/Database.h
  */
-#ifndef __DATABASE_H__
-#define __DATABASE_H__
+#ifndef DATABASE_H_
+#define DATABASE_H_
 
 #include <iostream>
 #include <mysql/mysql.h>

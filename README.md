@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 20:54:21
- * @LastEditTime: 2021-03-09 17:20:19
+ * @LastEditTime: 2021-03-10 21:08:06
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/README.md
@@ -10,17 +10,19 @@
 
 <p align="center">
 <a href="#build" alt="build"><img src="https://img.shields.io/badge/build-passing-brightgreen.svg" /></a>
-<a href="#platform" alt="platform"><img src="https://img.shields.io/badge/platform-MacOS%7C%20Linux%20%7C%20WSL-brightgreen" /></a>
+<a href="#platform" alt="platform"><img src="https://img.shields.io/badge/platform-MacOS%20%7C%20Linux%20%7C%20WSL-brightgreen" /></a>
 <a href="#IPv6" alt="platform"><img src="https://img.shields.io/badge/network-IPv4%20%7C%20IPv6-brightgreen" /></a>
 <a href="#Protocol" alt="platform"><img src="https://img.shields.io/badge/protocol-TCP-brightgreen" /></a>
 </p>
 <img src="https://i.loli.net/2021/03/06/bd5er7Tj3SGxMJA.png" alt="截图录屏_选择区域_20210306162652.png" style="zoom:100%;" />
 
+## 基本原理
+epoll、C/S、线程池、MySQL
 ## 基本功能
 
-群聊:white_check_mark:、私聊:white_check_mark:、获取用户列表:white_check_mark:
+群聊、私聊、获取用户列表
 
-用户数据持久化:white_check_mark:、支持IPv6网络:white_check_mark:
+用户数据持久化、支持IPv6网络
 
 ## 安装
 
