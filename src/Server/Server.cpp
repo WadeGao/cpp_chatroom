@@ -61,10 +61,13 @@ bool Server::initOneServerListener(int &listener, const char *port)
             return false;
         }
 
-        /*这里不应该调用SO_SNDBUF和SO_RCVBUF并设置缓冲区大小为nZero = 0，设置此标志虽然取消了内核缓冲区到应用缓冲区的双向拷贝
+        /*
+        这里不应该调用SO_SNDBUF和SO_RCVBUF并设置缓冲区大小为nZero = 0，设置此标志虽然取消了内核缓冲区到应用缓冲区的双向拷贝
         提高了性能，但是直接使用应用缓冲区相当于对其加了锁，即send()和recv()只能顺序执行，无法并发
         setsockopt(listener, SOL_SOCKET, SO_SNDBUF, &nZero, sizeof(nZero));
-        setsockopt(listener, SOL_SOCKET, SO_RCVBUF, &nZero, sizeof(nZero));*/
+        setsockopt(listener, SOL_SOCKET, SO_RCVBUF, &nZero, sizeof(nZero));
+        reference: 《SO_SNDBUF设置为0会发生什么事情》  https://blog.csdn.net/summerhust/article/details/6726337
+        */
 
         if (bind(listener, cur->ai_addr, cur->ai_addrlen) == 0)
             break;
@@ -137,7 +140,7 @@ void Server::Start()
                     fprintf(stderr, "Accept error\n");
                     continue;
                 }
-                fprintf(stdout, "Accept New Connection.\n");
+                //fprintf(stdout, "Accept New Connection.\n");
                 addfd(this->epfd, clientfd, true);
             }
             else if (events[i].events & EPOLLIN)

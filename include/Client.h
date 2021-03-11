@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-09 16:24:22
+ * @LastEditTime: 2021-03-11 16:48:04
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -47,5 +47,7 @@ public:
     ~Client();
     void Start();
 };
+
+ssize_t MessageTypeSelector();
 
 #endif

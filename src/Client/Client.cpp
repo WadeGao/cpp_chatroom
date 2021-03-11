@@ -5,6 +5,19 @@
 #include <sys/prctl.h>
 #include <sys/wait.h>
 
+ssize_t MessageTypeSelector()
+{
+    int selectCode = -1;
+    fflush(stdin);
+    fscanf(stdin, "%d", &selectCode);
+    if (selectCode > 4 || !selectCode)
+    {
+        fprintf(stderr, "Invalid selection: %d\n", selectCode);
+        return -1;
+    }
+    return selectCode;
+}
+
 static void handlerSIGCHLD(int signo)
 {
     pid_t PID;
@@ -141,16 +154,9 @@ void Client::Start()
         close(this->pipe_fd[0]);
         while (this->isClientWork)
         {
-            //TODO:这里的错误输入处理机制有问题
-            int selectCode;
-            fflush(stdin);
-            std::cin >> selectCode;
-            if (selectCode > 4 || !selectCode)
-            {
-                std::cout << "Invalid selection: " << selectCode << std::endl;
+            auto selectCode = MessageTypeSelector();
+            if (selectCode < 0)
                 continue;
-            }
-
             bzero(this->sendBuf, maxBufToMalloc);
             size_t writeBytes{0};
             switch (selectCode)
