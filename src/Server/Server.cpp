@@ -23,7 +23,7 @@ Server::Server() : myPool(maxThreadsNum)
 
 bool Server::initOneServerListener(int &listener, const char *port)
 {
-    addrinfo *ret, *cur, hints{};
+    addrinfo *ret, *cur, hints;
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM; /* Stream socket */
@@ -41,17 +41,31 @@ bool Server::initOneServerListener(int &listener, const char *port)
         return false;
     }
     const int reuseAddr = 1;
+    linger mySetLinger = {.l_onoff = 1, .l_linger = 5};
     for (cur = ret; cur; cur = cur->ai_next)
     {
         if ((listener = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol)) < 0)
             continue;
         if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) < 0)
         {
-            fprintf(stderr, "setsockopt reuse addr error\n");
+            fprintf(stderr, "setsockopt error:%s\n", strerror(errno));
             close(listener);
             freeaddrinfo(ret);
             return false;
         }
+        if (setsockopt(listener, SOL_SOCKET, SO_LINGER, &mySetLinger, sizeof(linger)) < 0)
+        {
+            fprintf(stderr, "setsockopt error:%s\n", strerror(errno));
+            close(listener);
+            freeaddrinfo(ret);
+            return false;
+        }
+
+        /*这里不应该调用SO_SNDBUF和SO_RCVBUF并设置缓冲区大小为nZero = 0，设置此标志虽然取消了内核缓冲区到应用缓冲区的双向拷贝
+        提高了性能，但是直接使用应用缓冲区相当于对其加了锁，即send()和recv()只能顺序执行，无法并发
+        setsockopt(listener, SOL_SOCKET, SO_SNDBUF, &nZero, sizeof(nZero));
+        setsockopt(listener, SOL_SOCKET, SO_RCVBUF, &nZero, sizeof(nZero));*/
+
         if (bind(listener, cur->ai_addr, cur->ai_addrlen) == 0)
             break;
         close(listener);
