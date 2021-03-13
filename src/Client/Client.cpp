@@ -30,7 +30,40 @@ Client::Client(const char *id, const char *pwd)
 {
     memcpy(this->myID, id, strlen(id));
     memcpy(this->myPassword, pwd, strlen(pwd));
+    /****************************************************************************************************************************/
+    fprintf(stdout, " ______________________________________________________________\n");
+    fprintf(stdout, "|_______________________Message Type Code______________________|\n");
+    fprintf(stdout, "|                                                              |\n");
+    fprintf(stdout, "| Group Message -------------------------------------------> 1 |\n");
+    fprintf(stdout, "| Private Message -----------------------------------------> 2 |\n");
+    fprintf(stdout, "| Get Online List -----------------------------------------> 3 |\n");
+    fprintf(stdout, "| Logout the chatroom -------------------------------------> 4 |\n");
+    fprintf(stdout, "|______________________________________________________________|\n");
 
+    auto curUserFolder = std::string(id) + "/";
+    auto MsgRecordFileName = std::string(id) + ".msg";
+    if (!isFolderOrFileExist(curUserFolder.c_str()))
+    {
+        if (mkdir(curUserFolder.c_str(), 0700) < 0)
+        {
+            fprintf(stderr, "Make user dir failed\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    if (chdir(curUserFolder.c_str()) < 0)
+    {
+        fprintf(stderr, "chdir failed\n");
+        exit(EXIT_FAILURE);
+    }
+    this->MsgFile = fopen(MsgRecordFileName.c_str(), "a+");
+    char MsgRecordBuffer[BUF_SIZE]{0};
+    while (!feof(this->MsgFile))
+    {
+        bzero(MsgRecordBuffer, BUF_SIZE);
+        fgets(MsgRecordBuffer, BUF_SIZE, this->MsgFile);
+        fprintf(stdout, "%s", MsgRecordBuffer);
+    }
+    /****************************************************************************************************************************/
     addrinfo hints{}, *ret, *cur;
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
@@ -59,7 +92,7 @@ Client::Client(const char *id, const char *pwd)
     }
 
     freeaddrinfo(ret);
-
+    /****************************************************************************************************************************/
     if (pipe(pipe_fd) < 0)
     {
         fprintf(stderr, "pipe() error");
@@ -131,14 +164,7 @@ void Client::RecvLoginStatus()
 void Client::Start()
 {
     this->Connect();
-    fprintf(stdout, " ______________________________________________________________\n");
-    fprintf(stdout, "|_______________________Message Type Code______________________|\n");
-    fprintf(stdout, "|                                                              |\n");
-    fprintf(stdout, "| Group Message -------------------------------------------> 1 |\n");
-    fprintf(stdout, "| Private Message -----------------------------------------> 2 |\n");
-    fprintf(stdout, "| Get Online List -----------------------------------------> 3 |\n");
-    fprintf(stdout, "| Logout the chatroom -------------------------------------> 4 |\n");
-    fprintf(stdout, "|______________________________________________________________|\n");
+
     static struct epoll_event events[2];
     signal(SIGCHLD, handlerSIGCHLD);
     fflush(nullptr);
@@ -177,6 +203,11 @@ void Client::Start()
                 getchar();
                 std::cin.getline(reinterpret_cast<ChatMessageType *>(this->sendBuf)->Msg, BUF_SIZE);
                 writeBytes = sizeof(ChatMessageType);
+
+                //TODO:写自己发送的消息，但是写不进去
+                fflush(this->MsgFile);
+                fprintf(this->MsgFile, "[%s] Myself >>> %s: %s\n", getTime().c_str(), reinterpret_cast<ChatMessageType *>(this->sendBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->sendBuf)->Msg);
+
                 break;
             case 1: //Group Message
                 reinterpret_cast<ChatMessageType *>(this->sendBuf)->OperCode = GROUP_MSG;
@@ -184,10 +215,16 @@ void Client::Start()
                 fprintf(stdout, "要发送的群聊消息: ");
                 std::cin.getline(reinterpret_cast<ChatMessageType *>(this->sendBuf)->Msg, BUF_SIZE);
                 writeBytes = sizeof(ChatMessageType);
+
+                //TODO:写自己发送的消息，但是写不进去
+                fflush(this->MsgFile);
+                fprintf(this->MsgFile, "[%s] Myself: %s\n", getTime().c_str(), reinterpret_cast<ChatMessageType *>(this->sendBuf)->Msg);
+
                 break;
             default:
                 break;
             }
+
             if (write(this->pipe_fd[1], reinterpret_cast<const void *>(this->sendBuf), writeBytes) < 0)
                 exit(CLIENT_WRITE_ERROR);
         }
@@ -215,13 +252,20 @@ void Client::Start()
                         {
                         case GROUP_MSG:
                             fprintf(stdout, "[%s] %s >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
+                            // 写聊天记录
+                            fprintf(this->MsgFile, "[%s] %s >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
                             break;
                         case PRIVATE_MSG:
                             fprintf(stdout, "[%s] %s(private) >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
+                            // 写聊天记录
+                            fprintf(this->MsgFile, "[%s] %s(private) >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
                             break;
                         case REPLY_ONLINE_LIST:
                             fprintf(stdout, "[%s] Accounts Online num: %lu\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
                             fprintf(stdout, "[%s] Accounts Online List: %s\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->List);
+                            // 写聊天记录
+                            fprintf(this->MsgFile, "[%s] Accounts Online num: %lu\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
+                            fprintf(this->MsgFile, "[%s] Accounts Online List: %s\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->List);
                             break;
                         case REPLY_NORMAL_OFFLINE:
                             fprintf(stdout, "[%s] Prepared to be offline.\n", curTime.c_str());
@@ -243,4 +287,13 @@ void Client::Start()
         }
     }
 }
-Client::~Client() { close(this->pipe_fd[!this->pid ? 1 : 0]); }
+
+Client::~Client()
+{
+    close(this->pipe_fd[!this->pid ? 1 : 0]);
+    fclose(this->MsgFile);
+}
+
+void Client::stdoutAndToLocalFile()
+{
+}

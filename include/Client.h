@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-11 16:48:04
+ * @LastEditTime: 2021-03-13 09:12:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Client.h
@@ -31,6 +31,7 @@ private:
     char myPassword[MAX_PASSWORD_LEN]{0};
     char sendBuf[maxBufToMalloc]{0};
     char recvBuf[maxBufToMalloc]{0};
+    FILE *MsgFile;
 
     int sock{0};
     pid_t pid{0};
@@ -41,6 +42,8 @@ private:
     void Connect();
     void TellMyIdentity(); //向服务器发送输入的ID和密码
     void RecvLoginStatus();
+
+    static void stdoutAndToLocalFile();
 
 public:
     Client(const char *id, const char *pwd);

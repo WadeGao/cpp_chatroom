@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-03-09 16:26:34
- * @LastEditTime: 2021-03-09 16:30:23
+ * @LastEditTime: 2021-03-12 22:06:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/src/Common/Common.cpp
@@ -73,3 +73,5 @@ std::string getTime()
     strftime(ret, sizeof(ret), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     return std::string(ret);
 }
+
+bool isFolderOrFileExist(const char *path) { return access(path, F_OK) < 0 ? false : true; }

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 1969-12-31 16:00:00
- * @LastEditTime: 2021-03-11 11:24:49
+ * @LastEditTime: 2021-03-13 09:07:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /cpp-imsoftware/include/Common.h
@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <dirent.h>
 #include <fcntl.h>
 #include <iostream>
 #include <list>
@@ -22,6 +23,7 @@
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
@@ -106,4 +108,5 @@ const auto maxBufToMalloc = sizeof(ChatMessageType);
 using LogoutMessageType = MessageType;
 using OnlineListRequestType = MessageType;
 
+bool isFolderOrFileExist(const char *path);
 #endif
