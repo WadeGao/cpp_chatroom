@@ -340,9 +340,9 @@ ssize_t Server::SendWelcomeMsg(int clientfd)
     auto SYSTEM_MSG = "System Message";
 
     welcomeMessageToSend.OperCode = PRIVATE_MSG;
-    snprintf(welcomeMessageToSend.Msg, BUF_SIZE, SERVER_WELCOME, this->Fd2_ID_Nickname[clientfd].second.c_str());
-    snprintf(welcomeMessageToSend.Whom, MAX_ACCOUNT_LEN, SYSTEM_MSG);
-
+    snprintf(welcomeMessageToSend.Msg, BUF_SIZE - 1, SERVER_WELCOME, this->Fd2_ID_Nickname[clientfd].second.c_str());
+    //snprintf(welcomeMessageToSend.Whom, MAX_ACCOUNT_LEN, SYSTEM_MSG);
+    strncpy(welcomeMessageToSend.Whom, SYSTEM_MSG, MAX_ACCOUNT_LEN - 1);
     return send(clientfd, reinterpret_cast<void *>(&welcomeMessageToSend), sizeof(ChatMessageType), 0);
 }
 
@@ -352,9 +352,10 @@ ssize_t Server::SendBroadcastMsg(const int clientfd, const char *MessageToSend)
     bzero(&broadcastMessageToSend, sizeof(ChatMessageType));
 
     broadcastMessageToSend.OperCode = GROUP_MSG;
-    snprintf(broadcastMessageToSend.Msg, BUF_SIZE, MessageToSend);
-    snprintf(broadcastMessageToSend.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[clientfd].second.c_str());
-
+    //snprintf(broadcastMessageToSend.Msg, BUF_SIZE, MessageToSend);
+    strncpy(broadcastMessageToSend.Msg, MessageToSend, BUF_SIZE - 1);
+    //snprintf(broadcastMessageToSend.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[clientfd].second.c_str());
+    strncpy(broadcastMessageToSend.Whom, this->Fd2_ID_Nickname[clientfd].second.c_str(), MAX_ACCOUNT_LEN - 1);
     for (const auto &iter : this->client_list)
         if (iter != clientfd)
             if (send(iter, reinterpret_cast<const void *>(&broadcastMessageToSend), sizeof(ChatMessageType), 0) < 0)
@@ -369,8 +370,10 @@ ssize_t Server::SendPrivateMsg(const int fd_from, const int fd_to, const char *M
     bzero(&privateMessageToSend, sizeof(ChatMessageType));
 
     privateMessageToSend.OperCode = PRIVATE_MSG;
-    snprintf(privateMessageToSend.Msg, BUF_SIZE, MessageToSend);
-    snprintf(privateMessageToSend.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[fd_from].second.c_str());
+    //snprintf(privateMessageToSend.Msg, BUF_SIZE, MessageToSend);
+    strncpy(privateMessageToSend.Msg, MessageToSend, BUF_SIZE - 1);
+    //snprintf(privateMessageToSend.Whom, MAX_ACCOUNT_LEN, this->Fd2_ID_Nickname[fd_from].second.c_str());
+    strncpy(privateMessageToSend.Whom, this->Fd2_ID_Nickname[fd_from].second.c_str(), MAX_ACCOUNT_LEN - 1);
 
     return send(fd_to, reinterpret_cast<const void *>(&privateMessageToSend), sizeof(ChatMessageType), 0);
 }

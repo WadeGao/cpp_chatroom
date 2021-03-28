@@ -10,7 +10,7 @@ ssize_t MessageTypeSelector()
     int selectCode = -1;
     fflush(stdin);
     fscanf(stdin, "%d", &selectCode);
-    if (selectCode > 4 || !selectCode)
+    if (selectCode > 4 || selectCode <= 0)
     {
         fprintf(stderr, "Invalid selection: %d\n", selectCode);
         return -1;
@@ -41,7 +41,7 @@ Client::Client(const char *id, const char *pwd)
     fprintf(stdout, "|______________________________________________________________|\n");
 
     auto curUserFolder = std::string(id) + "/";
-    auto MsgRecordFileName = std::string(id) + ".msg";
+    auto MsgRecordFileName = std::string(id) + ".chatlog";
     if (!isFolderOrFileExist(curUserFolder.c_str()))
     {
         if (mkdir(curUserFolder.c_str(), 0700) < 0)
@@ -261,10 +261,10 @@ void Client::Start()
                             fprintf(this->MsgFile, "[%s] %s(private) >>> %s\n", curTime.c_str(), reinterpret_cast<ChatMessageType *>(this->recvBuf)->Whom, reinterpret_cast<ChatMessageType *>(this->recvBuf)->Msg);
                             break;
                         case REPLY_ONLINE_LIST:
-                            fprintf(stdout, "[%s] Accounts Online num: %lu\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
+                            fprintf(stdout, "[%s] Accounts Online num: %u\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
                             fprintf(stdout, "[%s] Accounts Online List: %s\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->List);
                             // 写聊天记录
-                            fprintf(this->MsgFile, "[%s] Accounts Online num: %lu\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
+                            fprintf(this->MsgFile, "[%s] Accounts Online num: %u\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->OnLineNum);
                             fprintf(this->MsgFile, "[%s] Accounts Online List: %s\n", curTime.c_str(), reinterpret_cast<OnlineListMessageType *>(this->recvBuf)->List);
                             break;
                         case REPLY_NORMAL_OFFLINE:
